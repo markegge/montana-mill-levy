@@ -1,0 +1,636 @@
+{
+ "retrieved": "2026-11-07",
+ "source": "https://svc.mt.gov/dor/oriondataportal/Public/PropertyMTGov/CertifiedValues.aspx",
+ "jurisdictions": {
+  "2026": {
+   "CNTYWID": {
+    "label": "COUNTY WIDE LEVIES",
+    "values": {
+     "Special Mobile - Market Value": 0,
+     "Special Mobile - Taxable Value": 0,
+     "Manufactured Homes - Market Value": 265244271,
+     "Manufactured Homes - Taxable Value": 3728547,
+     "Personal Property - Market Value": 248307301,
+     "Personal Property - Taxable Value": 4738379,
+     "Real Property - Market Value": 55450967680,
+     "Real Property - Taxable Value": 755358737,
+     "Centrally Assessed - Market Value": 611135841,
+     "Centrally Assessed - Taxable Value": 45068417,
+     "Net & Gross Proceeds - Market Value": null,
+     "Net & Gross Proceeds - Taxable Value": 253746,
+     "Total - Market Value": 56575655093,
+     "Total - Taxable Value": 809147826,
+     "Newly Taxable - Market Value": null,
+     "Newly Taxable - Taxable Value": 16019374,
+     "TIF Increment - Market Value": null,
+     "TIF Increment - Taxable Value": 25484416
+    }
+   },
+   "BOZEMAN": {
+    "label": "CITY OF BOZEMAN",
+    "values": {
+     "Special Mobile - Market Value": 0,
+     "Special Mobile - Taxable Value": 0,
+     "Manufactured Homes - Market Value": 35826925,
+     "Manufactured Homes - Taxable Value": 433963,
+     "Personal Property - Market Value": 95496741,
+     "Personal Property - Taxable Value": 1865421,
+     "Real Property - Market Value": 19061726137,
+     "Real Property - Taxable Value": 245942083,
+     "Centrally Assessed - Market Value": 115730930,
+     "Centrally Assessed - Taxable Value": 10959490,
+     "Net & Gross Proceeds - Market Value": null,
+     "Net & Gross Proceeds - Taxable Value": 0,
+     "Total - Market Value": 19308780733,
+     "Total - Taxable Value": 259200957,
+     "Newly Taxable - Market Value": null,
+     "Newly Taxable - Taxable Value": 3265139,
+     "TIF Increment - Market Value": null,
+     "TIF Increment - Taxable Value": 23696327
+    }
+   },
+   "BELGRAD": {
+    "label": "CITY OF BELGRADE",
+    "values": {
+     "Special Mobile - Market Value": 0,
+     "Special Mobile - Taxable Value": 0,
+     "Manufactured Homes - Market Value": 10086020,
+     "Manufactured Homes - Taxable Value": 159383,
+     "Personal Property - Market Value": 28822120,
+     "Personal Property - Taxable Value": 591817,
+     "Real Property - Market Value": 3272855174,
+     "Real Property - Taxable Value": 39065125,
+     "Centrally Assessed - Market Value": 21510712,
+     "Centrally Assessed - Taxable Value": 1852043,
+     "Net & Gross Proceeds - Market Value": null,
+     "Net & Gross Proceeds - Taxable Value": 0,
+     "Total - Market Value": 3333274026,
+     "Total - Taxable Value": 41668368,
+     "Newly Taxable - Market Value": null,
+     "Newly Taxable - Taxable Value": 2870370,
+     "TIF Increment - Market Value": null,
+     "TIF Increment - Taxable Value": 1788089
+    }
+   },
+   "MANHATT": {
+    "label": "TOWN OF MANHATTAN",
+    "values": {
+     "Special Mobile - Market Value": 0,
+     "Special Mobile - Taxable Value": 0,
+     "Manufactured Homes - Market Value": 2415000,
+     "Manufactured Homes - Taxable Value": 37797,
+     "Personal Property - Market Value": 10381252,
+     "Personal Property - Taxable Value": 198996,
+     "Real Property - Market Value": 584416023,
+     "Real Property - Taxable Value": 6638096,
+     "Centrally Assessed - Market Value": 5090845,
+     "Centrally Assessed - Taxable Value": 444328,
+     "Net & Gross Proceeds - Market Value": null,
+     "Net & Gross Proceeds - Taxable Value": 0,
+     "Total - Market Value": 602303120,
+     "Total - Taxable Value": 7319217,
+     "Newly Taxable - Market Value": null,
+     "Newly Taxable - Taxable Value": 200596,
+     "TIF Increment - Market Value": null,
+     "TIF Increment - Taxable Value": 0
+    }
+   },
+   "THRFRK": {
+    "label": "CITY OF THREE FORKS",
+    "values": {
+     "Special Mobile - Market Value": 0,
+     "Special Mobile - Taxable Value": 0,
+     "Manufactured Homes - Market Value": 7542100,
+     "Manufactured Homes - Taxable Value": 90733,
+     "Personal Property - Market Value": 1216756,
+     "Personal Property - Taxable Value": 19385,
+     "Real Property - Market Value": 423556012,
+     "Real Property - Taxable Value": 4715685,
+     "Centrally Assessed - Market Value": 3321197,
+     "Centrally Assessed - Taxable Value": 315345,
+     "Net & Gross Proceeds - Market Value": null,
+     "Net & Gross Proceeds - Taxable Value": 0,
+     "Total - Market Value": 435636065,
+     "Total - Taxable Value": 5141148,
+     "Newly Taxable - Market Value": null,
+     "Newly Taxable - Taxable Value": 115885,
+     "TIF Increment - Market Value": null,
+     "TIF Increment - Taxable Value": 0
+    }
+   },
+   "WYLLSTN": {
+    "label": "TOWN OF WEST YELLOWSTONE",
+    "values": {
+     "Special Mobile - Market Value": 0,
+     "Special Mobile - Taxable Value": 0,
+     "Manufactured Homes - Market Value": 6772940,
+     "Manufactured Homes - Taxable Value": 115787,
+     "Personal Property - Market Value": 4763155,
+     "Personal Property - Taxable Value": 76640,
+     "Real Property - Market Value": 920478641,
+     "Real Property - Taxable Value": 14769001,
+     "Centrally Assessed - Market Value": 7730362,
+     "Centrally Assessed - Taxable Value": 328245,
+     "Net & Gross Proceeds - Market Value": null,
+     "Net & Gross Proceeds - Taxable Value": 0,
+     "Total - Market Value": 939745098,
+     "Total - Taxable Value": 15289673,
+     "Newly Taxable - Market Value": null,
+     "Newly Taxable - Taxable Value": 44720,
+     "TIF Increment - Market Value": null,
+     "TIF Increment - Taxable Value": 0
+    }
+   }
+  },
+  "2025": {
+   "CNTYWID": {
+    "label": "COUNTY WIDE LEVIES",
+    "values": {
+     "Special Mobile - Market Value": 35021,
+     "Special Mobile - Taxable Value": 1076,
+     "Manufactured Homes - Market Value": 265787379,
+     "Manufactured Homes - Taxable Value": 1922784,
+     "Personal Property - Market Value": 254890772,
+     "Personal Property - Taxable Value": 4876886,
+     "Real Property - Market Value": 55125547444,
+     "Real Property - Taxable Value": 689026672,
+     "Centrally Assessed - Market Value": 573403873,
+     "Centrally Assessed - Taxable Value": 42789196,
+     "Net & Gross Proceeds - Market Value": null,
+     "Net & Gross Proceeds - Taxable Value": 183685,
+     "Total - Market Value": 56219629468,
+     "Total - Taxable Value": 738800299,
+     "Newly Taxable - Market Value": null,
+     "Newly Taxable - Taxable Value": 31302804,
+     "TIF Increment - Market Value": null,
+     "TIF Increment - Taxable Value": 25129398
+    }
+   },
+   "BOZEMAN": {
+    "label": "CITY OF BOZEMAN",
+    "values": {
+     "Special Mobile - Market Value": 0,
+     "Special Mobile - Taxable Value": 0,
+     "Manufactured Homes - Market Value": 35838705,
+     "Manufactured Homes - Taxable Value": 264312,
+     "Personal Property - Market Value": 98049996,
+     "Personal Property - Taxable Value": 1926382,
+     "Real Property - Market Value": 18948721269,
+     "Real Property - Taxable Value": 229861538,
+     "Centrally Assessed - Market Value": 112231600,
+     "Centrally Assessed - Taxable Value": 10510687,
+     "Net & Gross Proceeds - Market Value": null,
+     "Net & Gross Proceeds - Taxable Value": 0,
+     "Total - Market Value": 19194841570,
+     "Total - Taxable Value": 242562919,
+     "Newly Taxable - Market Value": null,
+     "Newly Taxable - Taxable Value": 9374094,
+     "TIF Increment - Market Value": null,
+     "TIF Increment - Taxable Value": 23617301
+    }
+   },
+   "BELGRAD": {
+    "label": "CITY OF BELGRADE",
+    "values": {
+     "Special Mobile - Market Value": 0,
+     "Special Mobile - Taxable Value": 0,
+     "Manufactured Homes - Market Value": 10153960,
+     "Manufactured Homes - Taxable Value": 73863,
+     "Personal Property - Market Value": 20483628,
+     "Personal Property - Taxable Value": 360299,
+     "Real Property - Market Value": 3092143845,
+     "Real Property - Taxable Value": 32219290,
+     "Centrally Assessed - Market Value": 20053568,
+     "Centrally Assessed - Taxable Value": 1700767,
+     "Net & Gross Proceeds - Market Value": null,
+     "Net & Gross Proceeds - Taxable Value": 0,
+     "Total - Market Value": 3142835001,
+     "Total - Taxable Value": 34354219,
+     "Newly Taxable - Market Value": null,
+     "Newly Taxable - Taxable Value": 3728268,
+     "TIF Increment - Market Value": null,
+     "TIF Increment - Taxable Value": 1512097
+    }
+   },
+   "MANHATT": {
+    "label": "TOWN OF MANHATTAN",
+    "values": {
+     "Special Mobile - Market Value": 0,
+     "Special Mobile - Taxable Value": 0,
+     "Manufactured Homes - Market Value": 2414500,
+     "Manufactured Homes - Taxable Value": 18348,
+     "Personal Property - Market Value": 8727539,
+     "Personal Property - Taxable Value": 132359,
+     "Real Property - Market Value": 582046817,
+     "Real Property - Taxable Value": 5737835,
+     "Centrally Assessed - Market Value": 4559438,
+     "Centrally Assessed - Taxable Value": 384679,
+     "Net & Gross Proceeds - Market Value": null,
+     "Net & Gross Proceeds - Taxable Value": 0,
+     "Total - Market Value": 597748294,
+     "Total - Taxable Value": 6273221,
+     "Newly Taxable - Market Value": null,
+     "Newly Taxable - Taxable Value": 33287,
+     "TIF Increment - Market Value": null,
+     "TIF Increment - Taxable Value": 0
+    }
+   },
+   "THRFRK": {
+    "label": "CITY OF THREE FORKS",
+    "values": {
+     "Special Mobile - Market Value": 0,
+     "Special Mobile - Taxable Value": 0,
+     "Manufactured Homes - Market Value": 7847100,
+     "Manufactured Homes - Taxable Value": 55405,
+     "Personal Property - Market Value": 971543,
+     "Personal Property - Taxable Value": 16402,
+     "Real Property - Market Value": 412774949,
+     "Real Property - Taxable Value": 3697499,
+     "Centrally Assessed - Market Value": 3232713,
+     "Centrally Assessed - Taxable Value": 306758,
+     "Net & Gross Proceeds - Market Value": null,
+     "Net & Gross Proceeds - Taxable Value": 0,
+     "Total - Market Value": 424826305,
+     "Total - Taxable Value": 4076064,
+     "Newly Taxable - Market Value": null,
+     "Newly Taxable - Taxable Value": 11116,
+     "TIF Increment - Market Value": null,
+     "TIF Increment - Taxable Value": 0
+    }
+   },
+   "WYLLSTN": {
+    "label": "TOWN OF WEST YELLOWSTONE",
+    "values": {
+     "Special Mobile - Market Value": 0,
+     "Special Mobile - Taxable Value": 0,
+     "Manufactured Homes - Market Value": 6772940,
+     "Manufactured Homes - Taxable Value": 51239,
+     "Personal Property - Market Value": 4266047,
+     "Personal Property - Taxable Value": 68336,
+     "Real Property - Market Value": 924189141,
+     "Real Property - Taxable Value": 13847848,
+     "Centrally Assessed - Market Value": 6962043,
+     "Centrally Assessed - Taxable Value": 306146,
+     "Net & Gross Proceeds - Market Value": null,
+     "Net & Gross Proceeds - Taxable Value": 0,
+     "Total - Market Value": 942190171,
+     "Total - Taxable Value": 14273569,
+     "Newly Taxable - Market Value": null,
+     "Newly Taxable - Taxable Value": 346957,
+     "TIF Increment - Market Value": null,
+     "TIF Increment - Taxable Value": 0
+    }
+   }
+  }
+ },
+ "options_2026": [
+  [
+   "206-2026-TJ-06-7775",
+   "MANHATTAN ELEMENTARY SCHOOL"
+  ],
+  [
+   "206-2026-TJ-06-77752",
+   "MANHATTAN ELEMENTARY 3-4"
+  ],
+  [
+   "206-2026-TJ-06-7776",
+   "BOZEMAN ELEMENTARY"
+  ],
+  [
+   "206-2026-TJ-06-7778",
+   "WILLOW CREEK ELEMENTARY"
+  ],
+  [
+   "206-2026-TJ-06-7780",
+   "SPRINGHILL 20 ELEMENTARY"
+  ],
+  [
+   "206-2026-TJ-06-7782",
+   "COTTONWOOD ELEMENTARY"
+  ],
+  [
+   "206-2026-TJ-06-7784",
+   "THREE FORKS ELEMENTARY"
+  ],
+  [
+   "206-2026-TJ-06-7786",
+   "PASS CREEK ELEMENTARY"
+  ],
+  [
+   "206-2026-TJ-06-77862",
+   "PASS CREEK ELEMENTARY 25-21-46"
+  ],
+  [
+   "206-2026-TJ-06-7788",
+   "MONFORTON 27 ELEMENTARY"
+  ],
+  [
+   "206-2026-TJ-06-7790",
+   "GALLATIN GATEWAY ELEMENTARY"
+  ],
+  [
+   "206-2026-TJ-06-7794",
+   "SHIELDS VALLEY ELEMENTARY"
+  ],
+  [
+   "206-2026-TJ-06-7796",
+   "ANDERSON 41 ELEMENTARY"
+  ],
+  [
+   "206-2026-TJ-06-7798",
+   "LAMOTTE 43 ELEMENTARY"
+  ],
+  [
+   "206-2026-TJ-06-77982",
+   "LAMOTTE 43-7 ELEMENTARY"
+  ],
+  [
+   "206-2026-TJ-06-7800",
+   "BELGRADE 44C, 44R ELEMENTARY"
+  ],
+  [
+   "206-2026-TJ-06-7802",
+   "MALMBORG ELEMENTARY"
+  ],
+  [
+   "206-2026-TJ-06-7806",
+   "BIG SKY K-12"
+  ],
+  [
+   "206-2026-TJ-06-7808",
+   "AMSTERDAM 75 ELEMENTARY"
+  ],
+  [
+   "206-2026-TJ-06-78085",
+   "AMSTERDAM 75-7-3"
+  ],
+  [
+   "206-2026-TJ-06-7838",
+   "BOZEMAN HIGH SCHOOL"
+  ],
+  [
+   "206-2026-TJ-06-78382",
+   "BOZEMAN (7-44-1) ELEMENTARY"
+  ],
+  [
+   "206-2026-TJ-06-7840",
+   "BELGRADE HIGH SCHOOL"
+  ],
+  [
+   "206-2026-TJ-06-7842",
+   "MANHATTAN HIGH SCHOOL"
+  ],
+  [
+   "206-2026-TJ-06-7843",
+   "MANHATTAN (75-7-3) HIGH SCHOOL"
+  ],
+  [
+   "206-2026-TJ-06-7844",
+   "THREE FORKS HIGH SCHOOL"
+  ],
+  [
+   "206-2026-TJ-06-7846",
+   "WILLOW CREEK HIGH SCHOOL"
+  ],
+  [
+   "206-2026-TJ-06-7848",
+   "WEST YELLOWSTONE (K-12)"
+  ],
+  [
+   "206-2026-TJ-06-AF",
+   "AMSTERDAM FIRE DISTRICT"
+  ],
+  [
+   "206-2026-TJ-06-BCF",
+   "BRIDGER CANYON FIRE DISTRICT"
+  ],
+  [
+   "206-2026-TJ-06-BELGRAD",
+   "CITY OF BELGRADE"
+  ],
+  [
+   "206-2026-TJ-06-BGPC",
+   "BELGRADE (CITY) PLANNING DISTRICT"
+  ],
+  [
+   "206-2026-TJ-06-BGPR",
+   "BELGRADE (RURAL) PLANNING DISTRICT"
+  ],
+  [
+   "206-2026-TJ-06-BGSKYZN",
+   "BIG SKY ZONING"
+  ],
+  [
+   "206-2026-TJ-06-BOZEMAN",
+   "CITY OF BOZEMAN"
+  ],
+  [
+   "206-2026-TJ-06-BRCYNZN",
+   "BEAR CANYON ZONING"
+  ],
+  [
+   "206-2026-TJ-06-BRGZON",
+   "BRIDGER CANYON ZONING"
+  ],
+  [
+   "206-2026-TJ-06-BSF",
+   "BIG SKY FIRE DISTRICT"
+  ],
+  [
+   "206-2026-TJ-06-BSYWTR",
+   "BIG SKY WATER DISTRICT"
+  ],
+  [
+   "206-2026-TJ-06-BZP",
+   "BOZEMAN (CITY) PLANNING DISTRICT"
+  ],
+  [
+   "206-2026-TJ-06-CHURLIT",
+   "CHURCHILL LIGHTING"
+  ],
+  [
+   "206-2026-TJ-06-CNTYWID",
+   "COUNTY WIDE LEVIES"
+  ],
+  [
+   "206-2026-TJ-06-COSCHWD",
+   "COUNTY WIDE SCHOOL LEVIES"
+  ],
+  [
+   "206-2026-TJ-06-CVF",
+   "CENTRAL VALLEY FIRE DISTRICT"
+  ],
+  [
+   "206-2026-TJ-06-FC",
+   "FAIRVIEW CEMETERY DISTRICT"
+  ],
+  [
+   "206-2026-TJ-06-GALLCSV",
+   "GALLATIN CONSERVATION"
+  ],
+  [
+   "206-2026-TJ-06-GDM",
+   "GALLATIN DR MOSQUITO DISTRICT"
+  ],
+  [
+   "206-2026-TJ-06-GGF",
+   "GALLATIN GATEWAY FIRE DISTRICT"
+  ],
+  [
+   "206-2026-TJ-06-GP",
+   "COUNTY WIDE PLANNING DISTRICT"
+  ],
+  [
+   "206-2026-TJ-06-GRRF",
+   "GALLATIN RIVER RANCH FIRE DISTRICT"
+  ],
+  [
+   "206-2026-TJ-06-HBF",
+   "HEBGEN BASIN FIRE DISTRICT"
+  ],
+  [
+   "206-2026-TJ-06-HEBZONE",
+   "HEBGEN LAKE ZONING"
+  ],
+  [
+   "206-2026-TJ-06-HYALF",
+   "HYALITE RURAL FIRE DISTRICT"
+  ],
+  [
+   "206-2026-TJ-06-HYAZON",
+   "HYALITE ZONING"
+  ],
+  [
+   "206-2026-TJ-06-LOGLIT",
+   "LOGAN LIGHTING"
+  ],
+  [
+   "206-2026-TJ-06-MADDIKE",
+   "MADISON DIKE"
+  ],
+  [
+   "206-2026-TJ-06-MANHATT",
+   "TOWN OF MANHATTAN"
+  ],
+  [
+   "206-2026-TJ-06-MANLIT",
+   "MANHATTAN LIGHTING"
+  ],
+  [
+   "206-2026-TJ-06-MANPC",
+   "MANHATTAN (CITY) PLANNING DISTRICT"
+  ],
+  [
+   "206-2026-TJ-06-MANPR",
+   "MANHATTAN (RURAL) PLANNING DISTRICT"
+  ],
+  [
+   "206-2026-TJ-06-MANSTRT",
+   "MANHATTAN STREETS"
+  ],
+  [
+   "206-2026-TJ-06-MF",
+   "MANHATTAN FIRE DISTRICT"
+  ],
+  [
+   "206-2026-TJ-06-MG",
+   "MOUNT GREEN CEMETERY DISTRICT"
+  ],
+  [
+   "206-2026-TJ-06-MOSQUIT",
+   "THREE RIVERS MOSQUITO"
+  ],
+  [
+   "206-2026-TJ-06-MV",
+   "MEADOW VIEW CEMETERY DISTRICT"
+  ],
+  [
+   "206-2026-TJ-06-OPNSPC",
+   "OPEN SPACE BOND"
+  ],
+  [
+   "206-2026-TJ-06-PARKCSV",
+   "PARK CONSERVATION"
+  ],
+  [
+   "206-2026-TJ-06-RDLIBR",
+   "ROAD & LIBRARIES"
+  ],
+  [
+   "206-2026-TJ-06-RIVLIT",
+   "RIVERSIDE LIGHTING"
+  ],
+  [
+   "206-2026-TJ-06-RLCRZN",
+   "TRAIL CREEK ZONING"
+  ],
+  [
+   "206-2026-TJ-06-RRH2OSR",
+   "RIVER ROCK WATER & SEWER"
+  ],
+  [
+   "206-2026-TJ-06-RVRRKZN",
+   "RIVER ROCK ZONING"
+  ],
+  [
+   "206-2026-TJ-06-SF",
+   "SEDAN FIRE DISTRICT"
+  ],
+  [
+   "206-2026-TJ-06-SGLCNZN",
+   "S GAL CANYON ZONING"
+  ],
+  [
+   "206-2026-TJ-06-SMF",
+   "STORY MILL FIRE DISTRICT"
+  ],
+  [
+   "206-2026-TJ-06-SPRNHLZ",
+   "SPRINGHILL ZONING"
+  ],
+  [
+   "206-2026-TJ-06-SYPCN1",
+   "SYPES CANYON #1"
+  ],
+  [
+   "206-2026-TJ-06-SYPCN2",
+   "SYPES CANYON #2"
+  ],
+  [
+   "206-2026-TJ-06-TF",
+   "THREE FORKS FIRE DISTRICT"
+  ],
+  [
+   "206-2026-TJ-06-TFDIKE",
+   "THREE FORKS DIKE"
+  ],
+  [
+   "206-2026-TJ-06-THRFRK",
+   "CITY OF THREE FORKS"
+  ],
+  [
+   "206-2026-TJ-06-WF",
+   "WILLOW CREEK FIRE DISTRICT"
+  ],
+  [
+   "206-2026-TJ-06-WHTHLZN",
+   "WHEATLAND HILLS ZONING"
+  ],
+  [
+   "206-2026-TJ-06-WILLLIT",
+   "WILLOW CREEK LIGHTING"
+  ],
+  [
+   "206-2026-TJ-06-WYLLSTN",
+   "TOWN OF WEST YELLOWSTONE"
+  ],
+  [
+   "206-2026-TJ-06-ZONE1",
+   "ZONING DISTRICT #1"
+  ],
+  [
+   "206-2026-TJ-06-ZONE6",
+   "ZONING #6"
+  ]
+ ]
+}

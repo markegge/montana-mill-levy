@@ -1,0 +1,14 @@
+data/raw/
+data/derived/
+node_modules/
+dist/
+.env
+.venv/
+*.pmtiles
+public/tiles/
+pipeline/.venv/
+*.log
+# County tax statements name the owner; keep them local only (see data/README.md)
+data/private/
+*.mdf
+*.ldf

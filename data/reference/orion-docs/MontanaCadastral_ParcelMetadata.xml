@@ -1,0 +1,892 @@
+<metadata>
+  <idinfo>
+    <citation>
+      <citeinfo>
+        <origin>Montana State Library</origin>
+        <origin>Montana Department of Revenue</origin>
+        <origin>Flathead County</origin>
+        <origin>Missoula County</origin>
+        <origin>Ravalli County</origin>
+        <origin>Silver Bow County</origin>
+        <origin>Yellowstone County</origin>
+        <pubdate>20261103</pubdate>
+        <pubtime />
+        <title>Montana Cadastral Framework</title>
+        <edition />
+        <geoform>vector digital data</geoform>
+        <serinfo>
+          <sername />
+          <issue />
+        </serinfo>
+        <pubinfo>
+          <pubplace>Helena, MT</pubplace>
+          <publish>Montana State Library</publish>
+        </pubinfo>
+        <othercit>Online linkage is for the individual county databases can be found at:
+		</othercit>
+        <onlink>http://ftpgeoinfo.msl.mt.gov/Data/Spatial/MSDI/Cadastral/Parcels</onlink>
+        <lworkcit>
+          <citeinfo>
+            <origin>Montana State Library</origin>
+            <pubdate>20261103</pubdate>
+            <pubtime />
+            <title>Montana Parcels - Web Service</title>
+            <edition />
+            <geoform />
+            <serinfo>
+              <sername />
+              <issue />
+            </serinfo>
+            <othercit />
+            <onlink>https://mslservices.mt.gov/Geographic_Information/Data/DataList/datalist_Details.aspx?did={b2b3c906-8c40-4a9f-980e-48680a23c165}</onlink>
+            <lworkcit />
+          </citeinfo>
+        </lworkcit>
+      </citeinfo>
+    </citation>
+    <descript>
+      <abstract>The Montana Cadastral Framework shows the taxable parcels and tax-exempt parcels for most of Montana. The parcels contain selected information such as owner names, property and owner addresses, assessed value, agricultural use, and tax district information that were copied from the Montana Department of Revenue's ORION tax appraisal database. The data are maintained by the MT Department of Revenue, except for Ravalli, Silver Bow, Missoula, Flathead and Yellowstone counties that are maintained by the individual counties. The Revenue and county data are integrated by Montana State Library staff. Each parcel contains an attribute called ParcelID (geocode) that is the parcel identifier. View a pdf map of the counties that were updated this month here: http://ftpgeoinfo.msl.mt.gov/Data/Spatial/MSDI/Cadastral/Parcels/Statewide/MonthlyCadastralUpdateMap.pdf
+
+The parcel boundaries were aligned to fit with the Bureau of Land Management Geographic Coordinate Database (GCDB) of public land survey coordinates. Parcels whose legal descriptions consisted of aliquot parts of the public land survey system were created from the GCDB coordinates by selecting and, when necessary, subdividing public land survey entities. Other parcels were digitized from paper maps and the data from each map were transformed to fit with the appropriate GCDB boundaries.</abstract>
+      <purpose>Land ownership information that is tied to the Montana Department of Revenue's ORION database and available for a variety of mapping and query purposes.</purpose>
+      <supplinf />
+    </descript>
+    <timeperd>
+      <timeinfo>
+        <sngdate>
+          <caldate>20261103</caldate>
+          <time />
+        </sngdate>
+        <mdattim>
+          <sngdate>
+            <caldate />
+            <time />
+          </sngdate>
+          <sngdate>
+            <caldate />
+            <time />
+          </sngdate>
+        </mdattim>
+        <rngdates>
+          <begdate />
+          <begtime />
+          <enddate />
+          <endtime />
+        </rngdates>
+      </timeinfo>
+      <current>publication date</current>
+    </timeperd>
+    <status>
+      <progress>In work</progress>
+      <update>Continually</update>
+    </status>
+    <spdom>
+      <bounding>
+        <westbc>-116.178571</westbc>
+        <eastbc>-103.611130</eastbc>
+        <northbc>49.180871</northbc>
+        <southbc>44.237720</southbc>
+      </bounding>
+    </spdom>
+    <keywords>
+      <theme>
+        <themekt>ISO 19115 Topic Category</themekt>
+        <themekey>boundaries</themekey>
+        <themekey>planningCadastre</themekey>
+      </theme>
+      <theme>
+        <themekt>None</themekt>
+        <themekey>Montana Spatial Data Infrastructure</themekey>
+        <themekey>MSDI</themekey>
+        <themekey>Tax Parcel</themekey>
+        <themekey>Cadastral</themekey>
+      </theme>
+      <place>
+        <placekt>None</placekt>
+        <placekey>Montana</placekey>
+      </place>
+      <stratum>
+        <stratkt />
+        <stratkey />
+      </stratum>
+      <temporal>
+        <tempkt />
+        <tempkey />
+      </temporal>
+    </keywords>
+    <accconst>None</accconst>
+    <useconst>State law (Montana Code Annotated 2-6-1017) prohibits public agencies from distributing or selling a distribution list without first securing the permission of those on the list; and prohibits a list of persons prepared by a public agency from being used as a distribution list without first securing the permission of those on the list except by that agency. State law does not prevent an individual from compiling a distribution list by examination of records that are otherwise open to public inspection. These data do not constitute a legal survey. Inaccuracies exist with both the parcel boundaries and the attribute data; when seeking the definitive description of real property, consult the deed recorded at the local county courthouse. The Montana State Library provides this product/service for informational purposes only. The Library did not produce it for, nor is it suitable for legal, engineering, or surveying purposes. Consumers of this information should review or consult the primary data and information sources to ascertain the viability of the information for their purposes. The Library provides these data in good faith but does not represent or warrant its accuracy, adequacy, or completeness. In no event shall the Library be liable for any incorrect results or analysis; any direct, indirect, special, or consequential damages to any party; or any lost profits arising out of or in connection with the use or the inability to use the data or the services provided. The Library makes these data and services available as a convenience to the public, and for no other purpose. The Library reserves the right to change or revise published data and/or services at any time.</useconst>
+    <ptcontac>
+      <cntinfo>
+        <cntorgp>
+          <cntorg>Montana State Library</cntorg>
+        </cntorgp>
+        <cntaddr>
+          <addrtype>mailing</addrtype>
+          <address>P.O. Box 201800</address>
+          <city>Helena</city>
+          <state>Montana</state>
+          <postal>59620</postal>
+          <country>US</country>
+        </cntaddr>
+        <cntvoice>406-444-5354</cntvoice>
+        <cnttdd>Montana Relay 711</cnttdd>
+        <cntfax>406-444-0266</cntfax>
+        <cntemail>geoinfo@mt.gov</cntemail>
+        <hours>8:00 a.m. to 5:00 p.m. MST</hours>
+        <cntinst>e-mail contact is preferred</cntinst>
+      </cntinfo>
+    </ptcontac>
+    <browse>
+      <browsen />
+    </browse>
+    <datacred>The data were made possible by a public/private partnership including the U.S. Bureau of Land Management, several state agencies, local governments, The Montana Power Company, Montana/Dakota Utilities, and Burlington Northern Sante Fe Railroad. Most data are being maintained by staff of the Montana Department of Revenue (DOR).</datacred>
+    <native>Microsoft Windows 7 Version 6.1 (Build 7601) Service Pack 1; Esri ArcGIS 10.5.1</native>
+  </idinfo>
+  <dataqual>
+    <attracc>
+      <attraccr>Attributes were complete when returned to ISD from vendor (see data creation process in process steps). We can not verify that these attributes will remain complete when the data is in maintenance.</attraccr>
+    </attracc>
+    <logic>Databases checked for standardization</logic>
+    <complete>There are known unresolved parcels in some townships. As township level metadata becomes available these known omissions will be documented. Until then the data should be considered 99 percent complete.</complete>
+    <posacc>
+      <horizpa>
+        <horizpar>Please refer to the GCDB reference in the abstract. The data can't be more accurate than the GCDB township from which it was developed. Positional accuracy of GCDB townships vary based on the number and quality of surveys and control points. To find the positional accuracy of a GCDB township, one can download the file from their website and examine the .pgc file.</horizpar>
+      </horizpa>
+    </posacc>
+    <lineage>
+      <srcinfo>
+        <srccite>
+          <citeinfo>
+            <origin>Montana Department of Revenue</origin>
+            <pubdate />
+            <pubtime />
+            <title>Montana Department of Revenue Orion (CAMA) data</title>
+            <edition />
+            <geoform />
+            <serinfo>
+              <sername />
+              <issue />
+            </serinfo>
+            <pubinfo>
+              <pubplace />
+              <publish />
+            </pubinfo>
+            <othercit />
+            <onlink />
+            <lworkcit />
+          </citeinfo>
+        </srccite>
+        <typesrc>None</typesrc>
+        <srccitea>Montana Department of Revenue Orion (CAMA) data</srccitea>
+      </srcinfo>
+      <procstep>
+        <procdesc>This is the process used in most counties. 
+		
+		
+		A small percentage of Montana's land is subdivided, which leaves a large percentage of land in aliquot parts. Because aliquot parts are a mathematical subdivision of larger parcels into smaller equally-sized smaller parcels it is possible to possible to create ownership parcels in an automated manner if the supporting data exists. Two pieces of information are required create aliquot part parcels: 1) legal land descriptions defining the aliquot parts to plot and 2) framework of coordinates defining the public land survey. Both pieces of information exist, for most of the State of Montana, in a digital format. These existing databases are the Montana Department of Revenue Computer Assisted Mass Appraisal System (ORION) and the U.S. Bureau of Land Management Geographic Coordinate Data Base (GCDB). ORION is a database of all taxable (and some tax-exempt) lands in the State of Montana. It has four 30-character text fields for legal land descriptions of property. The GCDB holds locational information (x/y coordinates) of all section, quarter section, and quarter-quarter section corners, by township. Integrating the above two databases to produce digital land ownership parcels requires custom written software. This suite of programs, called the Montana Automated Parcel Program (MAPP), is the backbone of the Project. Vendors on contract with the cadastral project filled in unmapped areas, or 'holes', which remain in a township after running MAPP. These 'holes' are filled after field research at county courthouses which yields information about deeds, certificates of survey, and paper maps. Vendors also use a file generated by MAPP listing all parcels from the ORION database not mapped during the automated process. General Process: -- Download GCDB -- Download DOR ORION file -- Process aliquot parts using MAPP software -- Proof maps -- Identify missing parcels -- Send missing parcels to vendor -- Vendor researches missing parcels -- Vendor converts missing parcels -- QA/QC -- database checked for consistency -- identify unresolved parcels -- if under 5% all parcels to convert vendor work done -- DOR researched unresolved parcels -- DOR or GIS Bureau converts remaining unresolved parcels
+		
+		Some counties had existing data and different processes were followed. Contact Missoula, Yellowstone, Butte-Silver Bow, Ravalli, or Flathead counties for information on the processes used by those counties.</procdesc>
+        <procdate>not complete</procdate>
+        <proccont>
+          <cntinfo>
+            <cntorgp>
+              <cntorg>Montana State Library</cntorg>
+              <cntper>Montana State Library</cntper>
+            </cntorgp>
+            <cntvoice>406-444-5354</cntvoice>
+            <cntfax>406-444-0266</cntfax>
+            <cntemail>geoinfo@mt.gov</cntemail>
+            <hours>8:00 a.m. to 5:00 p.m. MST</hours>
+          </cntinfo>
+        </proccont>
+      </procstep>
+    </lineage>
+  </dataqual>
+  <spdoinfo>
+    <direct>Vector</direct>
+    <ptvctinf>
+      <sdtsterm>
+        <sdtstype>GT-polygon composed of chains</sdtstype>
+        <ptvctcnt>937257</ptvctcnt>
+      </sdtsterm>
+    </ptvctinf>
+  </spdoinfo>
+  <spref>
+    <horizsys>
+      <planar>
+        <mapproj>
+          <mapprojn>NAD 1983 (2011) StatePlane Montana FIPS 2500</mapprojn>
+          <lambertc>
+            <stdparll>45.0</stdparll>
+            <stdparll>49.0</stdparll>
+            <longcm>-109.5</longcm>
+            <latprjo>44.25</latprjo>
+            <feast>600000.0</feast>
+            <fnorth>0.0</fnorth>
+          </lambertc>
+        </mapproj>
+        <planci>
+          <plance>coordinate pair</plance>
+          <coordrep>
+            <absres>0.0001</absres>
+            <ordres>0.0001</ordres>
+          </coordrep>
+          <plandu>meter</plandu>
+        </planci>
+      </planar>
+      <geodetic>
+        <horizdn>D North American 1983 (2011)</horizdn>
+        <ellips>GRS 1980</ellips>
+        <semiaxis>6378137.0</semiaxis>
+        <denflat>298.257222101</denflat>
+      </geodetic>
+    </horizsys>
+  </spref>
+  <eainfo>
+    <detailed>
+      <enttyp>
+        <enttypl>OwnerParcel</enttypl>
+        <enttypd>Taxable land parcel as defined by MT. Dept. of Revenue and the Counties</enttypd>
+        <enttypds>MSL, DOR, counties</enttypds>
+      </enttyp>
+      <attr>
+        <attrlabl>NonQualAcres</attrlabl>
+        <attrdef>Land under one ownership that falls into the acreage range of 2-160 acres for which no agricultural application has been approved. A grade of N is required</attrdef>
+      </attr>
+      <attr>
+        <attrlabl>Range</attrlabl>
+        <attrdef>Township range (E or W) that the property is located in</attrdef>
+      </attr>
+      <attr>
+        <attrlabl>AssessmentCode</attrlabl>
+        <attrdef>Code assigned to property linking it to an assessment notice</attrdef>
+      </attr>
+      <attr>
+        <attrlabl>TaxYear</attrlabl>
+        <attrdef>Tax year for which information is relevant</attrdef>
+      </attr>
+      <attr>
+        <attrlabl>Shape</attrlabl>
+        <attrdef>Feature geometry.</attrdef>
+        <attrdefs>Esri</attrdefs>
+        <attrdomv>
+          <udom>Coordinates defining the features.</udom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>GISAcres</attrlabl>
+        <attrdef>Software Calculated Acreage</attrdef>
+      </attr>
+      <attr>
+        <attrlabl>PropertyID</attrlabl>
+        <attrdef>ORION database unique property ID number</attrdef>
+      </attr>
+      <attr>
+        <attrlabl>OBJECTID</attrlabl>
+        <attrdef>Internal feature number.</attrdef>
+        <attrdefs>Esri</attrdefs>
+        <attrdomv>
+          <udom>Sequential unique whole numbers that are automatically generated.</udom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>Shape_Length</attrlabl>
+        <attrdef>Length of feature in internal units.</attrdef>
+        <attrdefs>Esri</attrdefs>
+        <attrdomv>
+          <udom>Positive real numbers that are automatically generated.</udom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>OwnerName</attrlabl>
+        <attrdef>This is the name of the parcel owner</attrdef>
+      </attr>
+      <attr>
+        <attrlabl>TotalValue</attrlabl>
+        <attrdef>Total land reappraisal value</attrdef>
+      </attr>
+      <attr>
+        <attrlabl>TotalLandValue</attrlabl>
+        <attrdef>Total land reappraisal value</attrdef>
+      </attr>
+      <attr>
+        <attrlabl>IrrigatedAcres</attrlabl>
+        <attrdef>Acres of the parcel that are irrigated the majority of the time</attrdef>
+      </attr>
+      <attr>
+        <attrlabl>CareOfTaxpayer</attrlabl>
+        <attrdef>The Care-of taxpayer's Name is the name of the person to whom correspondence from the system will normally be sent, if different from the owner name</attrdef>
+      </attr>
+      <attr>
+        <attrlabl>OwnerZipCode</attrlabl>
+        <attrdef>The Zip Code of the taxpayer's mailing address. If the owner's mailing address is outside of the United States, will be &quot;00000&quot;</attrdef>
+      </attr>
+      <attr>
+        <attrlabl>OwnerState</attrlabl>
+        <attrdef>The two-character abbreviation of the state of the taxpayer's mailing address</attrdef>
+      </attr>
+      <attr>
+        <attrlabl>OwnerCity</attrlabl>
+        <attrdef>name of the city or town of the taxpayer's mailing address</attrdef>
+      </attr>
+      <attr>
+        <attrlabl>OwnerAddress2</attrlabl>
+        <attrdef>Second line of the taxpayer's mailing address</attrdef>
+      </attr>
+      <attr>
+        <attrlabl>AddressLine2</attrlabl>
+        <attrdef>Parcel Street Address, second line</attrdef>
+      </attr>
+      <attr>
+        <attrlabl>FarmsiteAcres</attrlabl>
+        <attrdef>Acres of the parcel considered to be 1 acre of land beneath improvements on agricultural land, usually the area around the dwelling</attrdef>
+      </attr>
+      <attr>
+        <attrlabl>PropType</attrlabl>
+        <attrdef>Property type</attrdef>
+        <attrdomv>
+          <edom>
+            <edomv>MC - Mining Claims</edomv>
+          </edom>
+          <edom>
+            <edomv>OI - Oilfield Improvements</edomv>
+          </edom>
+          <edom>
+            <edomv>VR - Vacant Land Rural</edomv>
+          </edom>
+          <edom>
+            <edomv>LA - Locally Assessed Utility</edomv>
+          </edom>
+          <edom>
+            <edomv>KR - Condominium Rural</edomv>
+          </edom>
+          <edom>
+            <edomv>KU - Condominium Urban</edomv>
+          </edom>
+          <edom>
+            <edomv>RU - Residential Urban</edomv>
+          </edom>
+          <edom>
+            <edomv>IU - Industrial Urban</edomv>
+          </edom>
+          <edom>
+            <edomv>CU - Commercial Urban</edomv>
+          </edom>
+          <edom>
+            <edomv>VU - Vacant Land Urban</edomv>
+          </edom>
+          <edom>
+            <edomv>BU - Commercial Condo Urban</edomv>
+          </edom>
+          <edom>
+            <edomv>AU - Agricultural Urban</edomv>
+          </edom>
+          <edom>
+            <edomv>AR - Agricultural Rural</edomv>
+          </edom>
+          <edom>
+            <edomv>TR - Townhouse Rural</edomv>
+          </edom>
+          <edom>
+            <edomv>RR - Residential Rural</edomv>
+          </edom>
+          <edom>
+            <edomv>EP - Exempt Property</edomv>
+          </edom>
+          <edom>
+            <edomv>TP - Tribal Property</edomv>
+          </edom>
+          <edom>
+            <edomv>FU - Farmstead Urban</edomv>
+          </edom>
+          <edom>
+            <edomv>BR - Commercial Condo Rural</edomv>
+          </edom>
+          <edom>
+            <edomv>NV - Non-Valued Property</edomv>
+          </edom>
+          <edom>
+            <edomv>MR - Mixed Use / Rural</edomv>
+          </edom>
+          <edom>
+            <edomv>TU - Townhouse Urban</edomv>
+          </edom>
+          <edom>
+            <edomv>MU - Mixed Use / Urban</edomv>
+          </edom>
+          <edom>
+            <edomv>FR - Farmstead Rural</edomv>
+          </edom>
+          <edom>
+            <edomv>CA - Centrally Assessed</edomv>
+          </edom>
+          <edom>
+            <edomv>CR - Commercial Rural</edomv>
+          </edom>
+          <edom>
+            <edomv>IR - Industrial Rural</edomv>
+          </edom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>LevyDistrict</attrlabl>
+        <attrdef>County Levy District Number</attrdef>
+      </attr>
+      <attr>
+        <attrlabl>PropAccess</attrlabl>
+        <attrdef>List of codes for type of road or other access to the property</attrdef>
+        <attrdomv>
+          <edom>
+            <edomv>2</edomv>
+            <edomvd>semi-improved road</edomvd>
+          </edom>
+          <edom>
+            <edomv>7</edomv>
+            <edomvd>alley</edomvd>
+          </edom>
+          <edom>
+            <edomv>8</edomv>
+            <edomvd>railroad</edomvd>
+          </edom>
+          <edom>
+            <edomv>1</edomv>
+            <edomvd>paved road</edomvd>
+          </edom>
+          <edom>
+            <edomv>5</edomv>
+            <edomvd>seasonal access</edomvd>
+          </edom>
+          <edom>
+            <edomv>4</edomv>
+            <edomvd>proposed road</edomvd>
+          </edom>
+          <edom>
+            <edomv>0</edomv>
+            <edomvd>landlocked/none</edomvd>
+          </edom>
+          <edom>
+            <edomv>6</edomv>
+            <edomvd>sidewalk</edomvd>
+          </edom>
+          <edom>
+            <edomv>3</edomv>
+            <edomvd>dirt road</edomvd>
+          </edom>
+          <edom>
+            <edomv>9</edomv>
+            <edomvd>river/waterway</edomvd>
+          </edom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>Section</attrlabl>
+        <attrdef>section number that the property is located in</attrdef>
+      </attr>
+      <attr>
+        <attrlabl>TotalBuildingValue</attrlabl>
+        <attrdef>Total reappraisal value of buildings and improvements</attrdef>
+      </attr>
+      <attr>
+        <attrlabl>WildHayAcres</attrlabl>
+        <attrdef>Acres of the parcel where either native grass or alfalfa is cut a majority of years for hay</attrdef>
+      </attr>
+      <attr>
+        <attrlabl>OwnerAddress3</attrlabl>
+        <attrdef>Third line of the taxpayer's mailing address. This is frequently the city and province for international addresses</attrdef>
+      </attr>
+      <attr>
+        <attrlabl>ForestAcres</attrlabl>
+        <attrdef>Acres of the parcel in forest land exceeding 15 contiguous acres that is capable of producing timber that can be harvested in commercial quantity</attrdef>
+      </attr>
+      <attr>
+        <attrlabl>FallowAcres</attrlabl>
+        <attrdef>Acres of the parcel where the accepted practice is to crop one year followed by a year of summer fallow</attrdef>
+      </attr>
+      <attr>
+        <attrlabl>ContinuousCropAcres</attrlabl>
+        <attrdef>Continuously Cropped - Acres of the parcel where the accepted practice is cropping at least 3 out of 4 years</attrdef>
+      </attr>
+      <attr>
+        <attrlabl>CertificateOfSurvey</attrlabl>
+        <attrdef>Certificate of Survey Number</attrdef>
+      </attr>
+      <attr>
+        <attrlabl>LegalDescriptionShort</attrlabl>
+        <attrdef>The legal description of the parcel as found in the deed describing the parcel, especially if no Subdivision or Section, Township, Range is entered.</attrdef>
+      </attr>
+      <attr>
+        <attrlabl>Township</attrlabl>
+        <attrdef>Township (N or S) that the property is located in</attrdef>
+      </attr>
+      <attr>
+        <attrlabl>COUNTYCD</attrlabl>
+        <attrdef>county code</attrdef>
+        <attrdomv>
+          <edom>
+            <edomv>32</edomv>
+            <edomvd>Stillwater County</edomvd>
+          </edom>
+          <edom>
+            <edomv>39</edomv>
+            <edomvd>Falon County</edomvd>
+          </edom>
+          <edom>
+            <edomv>53</edomv>
+            <edomvd>Golden Valley County</edomvd>
+          </edom>
+          <edom>
+            <edomv>6</edomv>
+            <edomvd>Gallatin County</edomvd>
+          </edom>
+          <edom>
+            <edomv>55</edomv>
+            <edomvd>Petroleum County</edomvd>
+          </edom>
+          <edom>
+            <edomv>16</edomv>
+            <edomvd>Dawson County</edomvd>
+          </edom>
+          <edom>
+            <edomv>28</edomv>
+            <edomvd>Powell County</edomvd>
+          </edom>
+          <edom>
+            <edomv>49</edomv>
+            <edomvd>Park County</edomvd>
+          </edom>
+          <edom>
+            <edomv>56</edomv>
+            <edomvd>Lincoln County</edomvd>
+          </edom>
+          <edom>
+            <edomv>14</edomv>
+            <edomvd>Custer County</edomvd>
+          </edom>
+          <edom>
+            <edomv>8</edomv>
+            <edomvd>Fergus County</edomvd>
+          </edom>
+          <edom>
+            <edomv>1</edomv>
+            <edomvd>Silver Bow County</edomvd>
+          </edom>
+          <edom>
+            <edomv>31</edomv>
+            <edomvd>Teton County</edomvd>
+          </edom>
+          <edom>
+            <edomv>33</edomv>
+            <edomvd>Treasure County</edomvd>
+          </edom>
+          <edom>
+            <edomv>44</edomv>
+            <edomvd>Wheatland County</edomvd>
+          </edom>
+          <edom>
+            <edomv>46</edomv>
+            <edomvd>Granite County</edomvd>
+          </edom>
+          <edom>
+            <edomv>36</edomv>
+            <edomvd>Judith Basin County</edomvd>
+          </edom>
+          <edom>
+            <edomv>41</edomv>
+            <edomvd>McCone County</edomvd>
+          </edom>
+          <edom>
+            <edomv>5</edomv>
+            <edomvd>Lewis and Clark County</edomvd>
+          </edom>
+          <edom>
+            <edomv>43</edomv>
+            <edomvd>Broadwater County</edomvd>
+          </edom>
+          <edom>
+            <edomv>20</edomv>
+            <edomvd>Valley County</edomvd>
+          </edom>
+          <edom>
+            <edomv>11</edomv>
+            <edomvd>Phillips County</edomvd>
+          </edom>
+          <edom>
+            <edomv>4</edomv>
+            <edomvd>Missoula County</edomvd>
+          </edom>
+          <edom>
+            <edomv>42</edomv>
+            <edomvd>Carter County</edomvd>
+          </edom>
+          <edom>
+            <edomv>34</edomv>
+            <edomvd>Sheridan County</edomvd>
+          </edom>
+          <edom>
+            <edomv>27</edomv>
+            <edomvd>Richland County</edomvd>
+          </edom>
+          <edom>
+            <edomv>10</edomv>
+            <edomvd>Carbon County</edomvd>
+          </edom>
+          <edom>
+            <edomv>24</edomv>
+            <edomvd>Blaine County</edomvd>
+          </edom>
+          <edom>
+            <edomv>35</edomv>
+            <edomvd>Sanders County</edomvd>
+          </edom>
+          <edom>
+            <edomv>45</edomv>
+            <edomvd>Prairie County</edomvd>
+          </edom>
+          <edom>
+            <edomv>22</edomv>
+            <edomvd>Big Horn County</edomvd>
+          </edom>
+          <edom>
+            <edomv>23</edomv>
+            <edomvd>Musselshell County</edomvd>
+          </edom>
+          <edom>
+            <edomv>29</edomv>
+            <edomvd>Rosebud County</edomvd>
+          </edom>
+          <edom>
+            <edomv>38</edomv>
+            <edomvd>Glacier County</edomvd>
+          </edom>
+          <edom>
+            <edomv>30</edomv>
+            <edomvd>Deer Lodge County</edomvd>
+          </edom>
+          <edom>
+            <edomv>50</edomv>
+            <edomvd>Garfield County</edomvd>
+          </edom>
+          <edom>
+            <edomv>47</edomv>
+            <edomvd>Meagher County</edomvd>
+          </edom>
+          <edom>
+            <edomv>7</edomv>
+            <edomvd>Flathead County</edomvd>
+          </edom>
+          <edom>
+            <edomv>15</edomv>
+            <edomvd>Lake County</edomvd>
+          </edom>
+          <edom>
+            <edomv>48</edomv>
+            <edomvd>Liberty County</edomvd>
+          </edom>
+          <edom>
+            <edomv>40</edomv>
+            <edomvd>Sweet Grass County</edomvd>
+          </edom>
+          <edom>
+            <edomv>25</edomv>
+            <edomvd>Madison County</edomvd>
+          </edom>
+          <edom>
+            <edomv>51</edomv>
+            <edomvd>Jefferson County</edomvd>
+          </edom>
+          <edom>
+            <edomv>2</edomv>
+            <edomvd>Cascade County</edomvd>
+          </edom>
+          <edom>
+            <edomv>9</edomv>
+            <edomvd>Powder River County</edomvd>
+          </edom>
+          <edom>
+            <edomv>19</edomv>
+            <edomvd>Choteau County</edomvd>
+          </edom>
+          <edom>
+            <edomv>26</edomv>
+            <edomvd>Pondera County</edomvd>
+          </edom>
+          <edom>
+            <edomv>12</edomv>
+            <edomvd>Hill County</edomvd>
+          </edom>
+          <edom>
+            <edomv>3</edomv>
+            <edomvd>Yellowstone County</edomvd>
+          </edom>
+          <edom>
+            <edomv>18</edomv>
+            <edomvd>Beaverhead County</edomvd>
+          </edom>
+          <edom>
+            <edomv>52</edomv>
+            <edomvd>Wibaux County</edomvd>
+          </edom>
+          <edom>
+            <edomv>21</edomv>
+            <edomvd>Toole County</edomvd>
+          </edom>
+          <edom>
+            <edomv>17</edomv>
+            <edomvd>Roosevelt County</edomvd>
+          </edom>
+          <edom>
+            <edomv>54</edomv>
+            <edomvd>Mineral County</edomvd>
+          </edom>
+          <edom>
+            <edomv>13</edomv>
+            <edomvd>Ravalli County</edomvd>
+          </edom>
+          <edom>
+            <edomv>37</edomv>
+            <edomvd>Daniels County</edomvd>
+          </edom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>PARCELID</attrlabl>
+        <attrdef>Feature Parcel identifier number (geocode)</attrdef>
+      </attr>
+      <attr>
+        <attrlabl>Shape_Area</attrlabl>
+        <attrdef>Area of feature in internal units squared.</attrdef>
+        <attrdefs>Esri</attrdefs>
+        <attrdomv>
+          <udom>Positive real numbers that are automatically generated.</udom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>TotalAcres</attrlabl>
+        <attrdef>Total acres of the parcel. In some areas this is filled out only for parcels that have agricultural acreage listed</attrdef>
+      </attr>
+      <attr>
+        <attrlabl>OwnerAddress1</attrlabl>
+        <attrdef>The house or building number, street name, and apartment or unit number, if applicable, of the taxpayer's mailing address</attrdef>
+      </attr>
+      <attr>
+        <attrlabl>AddressLine1</attrlabl>
+        <attrdef>Parcel Street Address, first line</attrdef>
+      </attr>
+      <attr>
+        <attrlabl>Subdivision</attrlabl>
+        <attrdef>Addition or Subdivision in which the parcel is located</attrdef>
+      </attr>
+      <attr>
+        <attrlabl>CityStateZip</attrlabl>
+        <attrdef>City, State and Zip Code of Parcel Address</attrdef>
+      </attr>
+      <attr>
+        <attrlabl>GrazingAcres</attrlabl>
+        <attrdef>Acres of the parcel in native range or domestic range which are used to support livestock</attrdef>
+      </attr>
+    </detailed>
+    <overview>
+      <eaover>base attributes of taxable land parcels created during conversion. You may encounter other attributes but that means they have been added by the maintainer and were not part of the original data.</eaover>
+    </overview>
+  </eainfo>
+  <distinfo>
+    <distrib>
+      <cntinfo>
+        <cntorgp>
+          <cntorg>Montana State Library</cntorg>
+          <cntper />
+        </cntorgp>
+        <cntpos />
+        <cntaddr>
+          <addrtype>mailing</addrtype>
+          <address>P.O. Box 201800</address>
+          <city>Helena</city>
+          <state>MT</state>
+          <postal>59620</postal>
+          <country />
+        </cntaddr>
+        <cntvoice>406-444-5354</cntvoice>
+        <cnttdd>Montana Relay 711</cnttdd>
+        <cntfax>406-444-0266</cntfax>
+        <cntemail>geoinfo@mt.gov</cntemail>
+        <hours>8:00 a.m. to 5:00 p.m. MST</hours>
+        <cntinst />
+      </cntinfo>
+    </distrib>
+    <resdesc>Downloadable data</resdesc>
+    <distliab>This data is a cooperative effort between the Montana State Library and the Montana Department of Revenue (DOR) other state agencies, local, governments, USDI BLM and private enterprise. The MSL provides mapped cadastral data, Web development, deployment, and enhancements. The DOR provides maintenance as well as assessment (CAMA) data relating to the mapped cadastral data. Neither the MSL nor any associated partner, nor their employees, makes any warranty, expressed or implied, including the fitness for a particular purpose, or assumes any legal liability responsibility for the accuracy, completeness, or usefulness of any information, apparatus, product, or process disclosed, or represents that its use would not infringe privately owned rights. In layman's terms: the data not constitute a legal survey; inaccuracies exist with both the mapped data and assessment (CAMA) data; when seeking the definitive description of real property, consult the deed recorded at the local county courthouse. State law ( Montana Code Annotated 2-6-109 (1)(a) ) explicitly prohibits State agencies from selling or distributing a list of persons to be used as a mailing list without first securing the permission of those on the list. State law ( MCA 2-6-109 (1)(b) ) also explicitly prohibits anyone from using a list of persons prepared by a state agency as a mailing list without first securing the permission of those on the list. &quot;A person violating the provisions of subsection (1)(b) is guilty of a misdemeanor.&quot;</distliab>
+    <stdorder>
+      <nondig />
+      <digform>
+        <digtinfo>
+          <formname />
+          <formverd />
+          <formcont />
+          <filedec />
+          <transize />
+        </digtinfo>
+        <digtopt>
+          <onlinopt>
+            <computer>
+              <networka>
+                <networkr />
+              </networka>
+            </computer>
+          </onlinopt>
+        </digtopt>
+      </digform>
+    </stdorder>
+    <custom />
+    <techpreq />
+    <availabl>
+      <timeinfo>
+        <sngdate>
+          <caldate />
+        </sngdate>
+        <mdattim>
+          <sngdate>
+            <caldate />
+          </sngdate>
+          <sngdate>
+            <caldate />
+          </sngdate>
+        </mdattim>
+        <rngdates>
+          <begdate />
+          <begtime />
+          <enddate />
+          <endtime />
+        </rngdates>
+      </timeinfo>
+    </availabl>
+  </distinfo>
+  <metainfo>
+    <metd>20261103</metd>
+    <metc>
+      <cntinfo>
+        <cntorgp>
+          <cntorg>Montana State Library</cntorg>
+        </cntorgp>
+        <cntaddr>
+          <addrtype>mailing</addrtype>
+          <address>P.O. Box 201800</address>
+          <city>Helena</city>
+          <state>Montana</state>
+          <postal>59620</postal>
+        </cntaddr>
+        <cntvoice>406-444-5354</cntvoice>
+        <cnttdd>Montana Relay 711</cnttdd>
+        <cntfax>406-444-0266</cntfax>
+        <cntemail>geoinfo@mt.gov</cntemail>
+        <hours>8:00 a.m. to 5:00 p.m. MST</hours>
+      </cntinfo>
+    </metc>
+    <metstdn>FGDC Content Standard for Digital Geospatial Metadata</metstdn>
+    <metstdv>FGDC-STD-001-1998</metstdv>
+    <mettc>local time</mettc>
+  </metainfo>
+  <Esri>
+    <PublishedDocID>{35524afc-669b-4614-9f44-43506ae21a1d}</PublishedDocID>
+  </Esri>
+</metadata>
