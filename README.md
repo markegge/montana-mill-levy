@@ -2,9 +2,9 @@
 
 Live: https://mills.egge.us (also https://mill-levy.mark-30e.workers.dev)
 
-Only Gallatin County is loaded so far.
+Gallatin County (Bozeman, Belgrade) and Yellowstone County (Billings, Laurel) are loaded.
 
-This is a parcel-level map of TY2026 and TY2025 general property taxes in Gallatin County, Montana, paired with a mill-levy revenue calculator. Taxable values come from Montana DOR's ORION CAMA database. Mills come from the Gallatin County Treasurer's own tax statements.
+This is a parcel-level map of TY2026 and TY2025 general property taxes in Gallatin and Yellowstone Counties, Montana, paired with a mill-levy revenue calculator. Taxable values come from Montana DOR's ORION CAMA database. Mills come from the Gallatin County Treasurer's own tax statements.
 
 - **Map:** each parcel is colored by annual tax. 3D Overture building footprints are colored by the structure share of the tax, and tax labels appear when you zoom in. Clicking a parcel or building opens a breakdown by land and structure, by jurisdiction group, and by levy line item, with a link to the county's tax statement.
 - **Calculator:** choose the county, a city, any other imported district boundary, a drawn polygon/rectangle, or an uploaded shapefile/GeoJSON, then choose a mill rate. The outputs are:
@@ -31,15 +31,15 @@ src/        Vite + React + TS frontend (MapLibre + OpenFreeMap, pmtiles, Rechart
 
 Prerequisites: Docker, uv, tippecanoe ≥ 2.79, poppler (`pdftotext`), and (optionally) `pmtiles` (brew).
 
-1. Put the raw inputs in `data/raw/`. PLAN.md §2 lists the URLs.
-   - `orion/COUNTY6_Gallatin_ORION_2026-11-06.zip`: the ORION SQL DB.
-   - `cadastral/Gallatin_GDB.zip`: unzip it so that `cadastral/Gallatin_Parcels.gdb` exists.
-   - `overture/gallatin_buildings.parquet`: download it with
-     `uvx --from overturemaps overturemaps download --bbox=-112.10,44.35,-110.20,46.20 -f geoparquet --type=building -o data/raw/overture/gallatin_buildings.parquet`
-2. Run `cd pipeline && uv sync && ./run_all.sh`.
-   - `orion_attach.sh` starts SQL Server 2022 Express in Docker (container `orion`, port 14333 on localhost) and attaches the MDF. It reuses an existing `orion-test`/`orion` container if one is running, then bcp-exports the tables. Set `MSSQL_SA_PASSWORD` first (for the existing `orion-test` container, the password it was created with).
-   - `02_levies.py` downloads one Treasurer tax-comparison PDF per levy district (about 140 PDFs, cached in `data/raw/itax/`).
-   - `08_validate.py` rewrites `VALIDATION.md` and `public/data/validation.json`. It also fetches 40 random bills for an independent check.
+1. Put the raw inputs in `data/raw/<county>/` (`gallatin`, `yellowstone`). PLAN.md §2 lists the sources; county settings are in `pipeline/county.py`.
+   - `orion/`: the county's ORION SQL DB zip from MSL (`.../ORION_SQLDatabases/COUNTY{n}.ZIP`; Gallatin is 6, Yellowstone is 3).
+   - `cadastral/`: the county FGDB zip from MSL (`.../Cadastral/Parcels/<County>/<County>_GDB.zip`), unzipped.
+   - `overture/<county>_buildings.parquet`: `uvx --from overturemaps overturemaps download --bbox=W,S,E,N -f geoparquet --type=building -o ...` with the bbox from `county.py`.
+2. Run `cd pipeline && uv sync && MSSQL_SA_PASSWORD=... ./run_all.sh` (or `COUNTIES=yellowstone ./run_all.sh`). Each step takes `--county`.
+   - `orion_attach.sh <county>` starts SQL Server 2022 Express in Docker (container `orion`, port 14333 on localhost), attaches the county MDF and bcp-exports the tables. It reuses a running `orion-test`/`orion` container.
+   - `02_levies.py` reads one Treasurer statement per levy district: Gallatin's iTax tax-comparison PDFs, and Yellowstone's Treasurer property pages (itemized mills per levy). Downloads are cached under `data/raw/<county>/` and are not published, because they name owners.
+   - `06_tiles.sh` writes one parcels and one buildings PMTiles covering every county. `07_publish.py` merges the counties into `public/data/` (one lazily loaded index per county).
+   - `08_validate.py` rewrites `VALIDATION.md` and `public/data/validation.json`, with a section per county. It also fetches 40 random statements per county for an independent check.
 
 Restart the ORION container later with `docker start orion` (or `orion-test`). If you need a fresh one, run `pipeline/orion_attach.sh`.
 
@@ -66,8 +66,8 @@ npm_config_cache=/tmp/npm-cache-milllevy npx wrangler@4 deploy   # Worker "mill-
 Production tiles are in the R2 bucket `mill-levy-tiles`, served from its custom domain https://mills-tiles.egge.us (zone egge.us). That URL is set in `.env.production` as `VITE_TILES_BASE`. To update the tiles:
 
 ```bash
-for f in parcels buildings; do npx wrangler@4 r2 object put mill-levy-tiles/gallatin/$f.pmtiles \
-  --file data/derived/$f.pmtiles --content-type application/octet-stream --remote; done
+for f in parcels buildings; do npx wrangler@4 r2 object put mill-levy-tiles/mt/$f.pmtiles \
+  --file data/derived/all/$f.pmtiles --content-type application/octet-stream --remote; done
 ```
 
 The bucket's CORS rules come from `cors.json` (GET/HEAD from mills.egge.us, the workers.dev URL and localhost:5173, exposing range headers). Deploys use an authenticated `wrangler login` session.
@@ -79,9 +79,9 @@ The Worker serves https://mills.egge.us as a Workers Custom Domain (`routes` in 
 | Data | Source | Terms |
 |---|---|---|
 | Property values, taxable values, class codes | Montana Department of Revenue, ORION property database (via Montana State Library, 2026-11-06) | Public record |
-| Parcel polygons | Montana State Library, Montana Cadastral (Gallatin County, 2026-11-03) | Public record |
+| Parcel polygons | Montana State Library, Montana Cadastral (Gallatin and Yellowstone Counties, 2026-11-03) | Public record |
 | District boundaries | Montana State Library, Administrative Boundaries Framework | Public record |
-| Mill levies | Gallatin County Treasurer tax statements and mill levy books | Public record |
+| Mill levies | Gallatin County Treasurer tax statements and mill levy books; Yellowstone County Treasurer property tax statements | Public record |
 | Certified taxable values | Montana DOR Certified Values portal | Public record |
 | Building footprints and heights | [Overture Maps Foundation](https://overturemaps.org), buildings theme, release 2026-10-21.0 | Per Overture's [attribution and licensing](https://docs.overturemaps.org/attribution/): ODbL (OpenStreetMap-derived features) and CDLA Permissive 2.0 |
 | Basemap | [OpenFreeMap](https://openfreemap.org), with data © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright) | ODbL; attribution shown on the map |

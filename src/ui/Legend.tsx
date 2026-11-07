@@ -30,7 +30,7 @@ export default function Legend({ mode, meta, addedBreaks, mills, year, selection
       </div>
       <div className="legend-foot">
         <span><i style={{ background: EXEMPT }} /> {mode === 'added' ? 'Outside the area / exempt' : 'Exempt / non-valued'}</span>
-        <span className="muted">Classes are septiles{mode === 'added' ? ' within the area' : ' county-wide'}</span>
+        <span className="muted">{mode === 'added' ? 'Septiles within the area' : 'Septiles, both counties'}</span>
       </div>
     </div>
   )

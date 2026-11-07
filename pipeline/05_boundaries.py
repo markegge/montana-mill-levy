@@ -14,16 +14,19 @@ import pandas as pd
 import requests
 
 ROOT = Path(__file__).resolve().parents[1]
-D = ROOT / "data" / "derived"
-RAW = ROOT / "data" / "raw" / "boundaries"
+from county import county_from_argv
+
+C = county_from_argv()
+D = C.derived
+RAW = C.raw / "boundaries"
 RAW.mkdir(parents=True, exist_ok=True)
 REF = ROOT / "data" / "reference"
 B = "https://services.arcgis.com/qnjIrwR8z5Izc0ij/arcgis/rest/services/Montana_Administrative_Boundaries_Framework/FeatureServer"
-BBOX = "-112.10,44.35,-110.20,46.20"
+BBOX = ",".join(str(v) for v in C.bbox)
 
 # layer -> (type, name field, extra where)
 LAYERS = {
-    5: ("county", "NAME", "NAME='Gallatin'"),
+    5: ("county", "NAME", f"NAME='{C.name}'"),
     7: ("city", "NAME", "1=1"),
     10: ("elem_sd", "NAME", "1=1"),
     11: ("hs_sd", "NAME", "1=1"),
@@ -78,7 +81,7 @@ def main():
         # keep features meaningfully inside Gallatin County (>= 5% of their area, or >= 2 km2)
         keep = (frac >= 0.05) | (inter >= 2e6)
         gm = gm[keep]
-        if typ == "utd":
+        if typ == "utd" and C.slug == "gallatin":
             gm = gm[~gm[nf].str.contains("GALLATIN VALLEY", case=False, na=False)]  # use the staged GVUTD file
         for _, r in gm.iterrows():
             name = str(r.get(nf) or "").strip()
@@ -88,7 +91,7 @@ def main():
             src = r.get("SOURCE") or r.get("Source") or "MSL"
             pretty = name.title() if name.isupper() else name
             if typ == "city":
-                pretty = ("City of " if pretty in ("Bozeman", "Belgrade") else "Town of ") + pretty
+                pretty = ("City of " if pretty in ("Bozeman", "Belgrade", "Billings", "Laurel") else "Town of ") + pretty
             elif typ == "fire" and "fire" not in pretty.lower():
                 pretty += " Fire District"
             elif typ == "tifd" and "tif" not in pretty.lower():
@@ -98,15 +101,22 @@ def main():
             rows.append({"id": f"{typ}-{slug(name)}", "name": pretty, "type": typ, "source": f"MSL layer {layer} ({src})",
                          "updated": str(upd)[:10], "geometry": r.geometry})
     out = gpd.GeoDataFrame(rows, geometry="geometry", crs=6514)
-    # GVUTD (MSL layer 61, County GIS, 2022-08-23)
-    gv = gpd.read_file(REF / "gvutd_boundary_msl.geojson").to_crs(6514)
-    gvrow = gpd.GeoDataFrame([{"id": "utd-gallatin-valley-urban-transportation-district", "name": "Gallatin Valley Urban Transportation District",
-                               "type": "utd", "source": "MSL layer 61 (County GIS), updated 2022-08-23",
-                               "updated": "2022-08-23", "geometry": gv.geometry.union_all()}], crs=6514)
+    if out.empty:
+        raise SystemExit("no boundaries")
     crow = out[out["type"] == "county"].copy()
-    crow["id"] = "gallatin-county"; crow["name"] = "Gallatin County"
-    out = pd.concat([gvrow, crow, out[out["type"] != "county"]], ignore_index=True)
+    crow["id"] = f"{C.slug}-county"; crow["name"] = f"{C.name} County"
+    parts = [crow, out[out["type"] != "county"].assign(id=lambda d: C.id_prefix + d["id"])]
+    if C.slug == "gallatin":
+        # GVUTD (MSL layer 61, County GIS, 2022-08-23) from the staged reference file
+        gv = gpd.read_file(REF / "gvutd_boundary_msl.geojson").to_crs(6514)
+        parts.insert(0, gpd.GeoDataFrame([{
+            "id": "utd-gallatin-valley-urban-transportation-district",
+            "name": "Gallatin Valley Urban Transportation District", "type": "utd",
+            "source": "MSL layer 61 (County GIS), updated 2022-08-23", "updated": "2022-08-23",
+            "geometry": gv.geometry.union_all()}], crs=6514))
+    out = pd.concat(parts, ignore_index=True)
     out = gpd.GeoDataFrame(out, geometry="geometry", crs=6514)
+    out["county"] = C.slug
     # de-duplicate ids
     out["id"] = out.id.where(~out.id.duplicated(), out.id + "-" + out.groupby("id").cumcount().astype(str))
     out["geometry"] = out.geometry.simplify(5, preserve_topology=True)

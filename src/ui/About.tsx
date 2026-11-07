@@ -9,6 +9,12 @@ const fmtVal = (v: unknown) => {
   return typeof v === 'object' ? JSON.stringify(v) : String(v)
 }
 
+function groupByCounty(checks: Validation['checks']) {
+  const out: Record<string, Validation['checks']> = {}
+  for (const c of checks) (out[c.county ?? 'other'] ??= []).push(c)
+  return out
+}
+
 export default function About({ meta, onClose }: { meta: Meta; onClose: () => void }) {
   const [validation, setValidation] = useState<Validation | null | undefined>(undefined)
   useEffect(() => {
@@ -31,9 +37,10 @@ export default function About({ meta, onClose }: { meta: Meta; onClose: () => vo
         </header>
         <div className="modal-body prose">
           <p className="lede">
-            This map covers Gallatin County only. Taxable values and class rates come from the Montana Department of Revenue's ORION assessment
-            database, and mills come from the Gallatin County Treasurer's tax statements. A sample of 40 properties per year matched their
-            Treasurer statements to the cent. Some figures are estimates; the notes below say which.
+            This map covers Gallatin and Yellowstone Counties. Taxable values and class rates come from the Montana Department of Revenue's ORION
+            assessment database. Gallatin's mills come from the Gallatin County Treasurer's tax comparison statements. Yellowstone's come from the
+            Yellowstone County Treasurer's property tax statements, which itemize the mills for each levy district. The validation table below
+            compares the results with Treasurer statements and DOR certified values. Some figures are estimates; the notes below say which.
           </p>
 
           <h3>Coverage and exclusions</h3>
@@ -62,8 +69,8 @@ revenue at N mills = value of a mill × N`}</pre>
           </p>
           <p>
             <b>By jurisdiction.</b> A parcel's tax is split across State, County, City, Elementary, High school, Fire and Other districts in proportion to each
-            levy's mills in the parcel's levy district. Each levy's mills are derived from one Treasurer tax statement per levy district, which lists both
-            years. Total mills fell 5 to 7% from 2025 to 2026 because many levies are set in dollars, so their mill rates drop as taxable value rises.
+            levy's mills in the parcel's levy district. Each levy's mills come from Treasurer tax statements. In most levy
+            districts total mills fell from 2025 to 2026 because many levies are set in dollars, so their mill rates drop as taxable value rises.
           </p>
           <p>
             <b>3D structures.</b> Footprints are from Overture Maps. Each parcel's structure tax is split across its footprints in proportion to footprint
@@ -71,15 +78,17 @@ revenue at N mills = value of a mill × N`}</pre>
           </p>
           <p>
             <b>Calculator.</b> A property is in an area when its parcel's representative point falls inside the boundary. Added tax = taxable value × N ÷ 1,000.
-            About 630 properties (0.5% of taxable value) have no matching parcel polygon and are counted only in the county-wide selection. The calculator does
-            not apply 15-10-420 levy limits.
+            In TY2026, about 630 Gallatin properties (0.5% of the county's taxable value) and 230 Yellowstone properties (0.2%) have no matching parcel polygon.
+            They are counted only when the whole county is selected. A drawn or uploaded shape that crosses the county line uses both counties' properties.
+            The calculator does not apply 15-10-420 levy limits.
           </p>
 
           <p>
-            <b>Levy base.</b> The value of a mill counts mapped real property only. Inside Bozeman's and Belgrade's TIF (urban renewal) districts,
-            mills levied on the increment above the base year go to the TIF, so the calculator also shows a net figure with the estimated increment
-            removed. Personal property and centrally assessed utilities and railroads (about 7% of the county's taxable value per DOR certified values)
-            are also taxed but are not mapped. The calculator shows their approximate effect.
+            <b>Levy base.</b> The value of a mill counts mapped real property only. Inside TIF (urban renewal) districts, mills levied on the increment
+            above the base year go to the TIF, so the calculator also shows a net figure with the estimated increment removed. Bozeman and Belgrade have
+            TIF districts; Billings has three and Laurel has one. Personal property and centrally assessed utilities and railroads are also taxed but are
+            not mapped. Per DOR certified values they add about 7% to Gallatin County's taxable value and about 26% to Yellowstone County's. The
+            calculator shows their approximate effect.
           </p>
 
           <h3>Data vintages</h3>
@@ -95,12 +104,13 @@ revenue at N mills = value of a mill × N`}</pre>
           <h3>Validation</h3>
           {validation === undefined && <p className="muted">Loading…</p>}
           {validation === null && <p className="muted">No validation report is available for this build.</p>}
-          {validation && (
-            <div className="table-scroll">
+          {validation && Object.entries(groupByCounty(validation.checks)).map(([county, checks]) => (
+            <div className="table-scroll" key={county}>
+              <h4 className="val-county">{meta.counties[county]?.name ?? (county === 'other' ? 'Other checks' : county)}</h4>
               <table className="validation">
                 <thead><tr><th>Check</th><th className="r">Expected</th><th className="r">Actual</th><th>Status</th></tr></thead>
                 <tbody>
-                  {validation.checks.map((c) => (
+                  {checks.map((c) => (
                     <tr key={c.id}>
                       <td><span className="mono small">{c.id}</span> {c.name}{c.detail ? <div className="small muted">{c.detail}</div> : null}</td>
                       <td className="r mono">{fmtVal(c.expected)}</td>
@@ -111,13 +121,14 @@ revenue at N mills = value of a mill × N`}</pre>
                 </tbody>
               </table>
             </div>
-          )}
+          ))}
 
           <h3>Sources</h3>
           <ul className="sources">
             <li><a href="https://ftpgeoinfo.msl.mt.gov/Data/Spatial/MSDI/Cadastral/ORION_SQLDatabases/" target="_blank" rel="noreferrer">Montana DOR ORION database</a> (via Montana State Library)</li>
             <li><a href="https://ftpgeoinfo.msl.mt.gov/Data/Spatial/MSDI/Cadastral/Parcels/" target="_blank" rel="noreferrer">Montana cadastral parcels</a></li>
             <li><a href="https://gallatinmt.gov/DocumentCenter/View/2785/2025-MILL-LEVY-INFORMATION" target="_blank" rel="noreferrer">Gallatin County 2025 mill levy book</a> and county tax comparison statements</li>
+            <li><a href="https://www.yellowstonecountymt.gov/treasurer/" target="_blank" rel="noreferrer">Yellowstone County Treasurer</a> property tax statements</li>
             <li><a href="https://svc.mt.gov/dor/oriondataportal/Public/PropertyMTGov/CertifiedValues.aspx" target="_blank" rel="noreferrer">DOR certified values</a> (validation)</li>
             <li><a href="https://overturemaps.org/" target="_blank" rel="noreferrer">Overture Maps Foundation</a> buildings; basemap © OpenFreeMap, OpenMapTiles, OpenStreetMap contributors</li>
             <li>Boundaries: Montana State Library Administrative Boundaries Framework</li>

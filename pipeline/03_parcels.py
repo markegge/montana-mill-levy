@@ -17,8 +17,11 @@ import pandas as pd
 import pyogrio
 
 ROOT = Path(__file__).resolve().parents[1]
-D = ROOT / "data" / "derived"
-GDB = ROOT / "data" / "raw" / "cadastral" / "Gallatin_Parcels.gdb"
+from county import county_from_argv
+
+C = county_from_argv()
+D = C.derived
+GDB = C.gdb
 
 
 def load_parcels() -> gpd.GeoDataFrame:
@@ -149,6 +152,9 @@ def main():
     # Use the parcel's own AssessmentCode (cadastral) when it's a real-property code; condo masters get "".
     ac = out.ac_o.where(out.ac_o.notna(), out.ac_o_25)
     ac = ac.fillna(out.AssessmentCode.fillna("").str.strip().str.lstrip("0"))
+    if C.slug == "yellowstone":
+        # Treasurer tax code = assessment code without its trailing check zero (000A233200 -> A23320)
+        ac = ac.astype(str).where(~ac.astype(str).str.endswith("0"), ac.astype(str).str[:-1])
     out["ac"] = ac.where(out.n_units == 0, "")
     addr_c = (out.AddressLine1.fillna("").str.strip() + ", " +
               out.CityStateZip.fillna("").str.strip().str.replace(r",? MT.*$", "", regex=True).str.title()).str.strip(", ")

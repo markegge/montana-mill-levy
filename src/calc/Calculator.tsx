@@ -34,6 +34,8 @@ const SPLIT_LABEL: Record<keyof typeof SPLIT_COLORS, string> = {
 interface Props {
   idx: PropIndex | null
   progress: number
+  /** Counties whose property index is still loading, e.g. "Yellowstone County" */
+  loadingLabel: string
   levies: Levies
   meta: Meta
   year: Year
@@ -80,7 +82,7 @@ export default function Calculator(props: Props) {
           {!idx && (
             <div className="loading-inline">
               <div className="bar"><div style={{ width: progress >= 0 ? `${Math.round(progress * 100)}%` : '40%' }} className={progress < 0 ? 'indeterminate' : ''} /></div>
-              Loading property records…
+              Loading {props.loadingLabel || 'property'} records…
             </div>
           )}
           {idx && base && selection && <Outputs {...props} base={base} idx={idx} levies={levies} year={year} />}
@@ -90,7 +92,7 @@ export default function Calculator(props: Props) {
   )
 }
 
-function DistrictPicker({ groups, presets, selection, onSelectDistrict, onCustom, drawing, onDraw }: Props) {
+function DistrictPicker({ groups, presets, selection, onSelectDistrict, onCustom, drawing, onDraw, meta }: Props) {
   const [q, setQ] = useState('')
   const [open, setOpen] = useState(false)
   const [upload, setUpload] = useState<{ file: string; shapes: UploadedShape[]; on: boolean[] } | null>(null)
@@ -101,9 +103,10 @@ function DistrictPicker({ groups, presets, selection, onSelectDistrict, onCustom
   const list = useMemo(() => {
     const needle = q.trim().toLowerCase()
     return [...groups.values()]
-      .filter((g) => !needle || g.name.toLowerCase().includes(needle) || (TYPE_LABEL[g.type] ?? g.type).toLowerCase().includes(needle))
+      .filter((g) => !needle || g.name.toLowerCase().includes(needle) || (TYPE_LABEL[g.type] ?? g.type).toLowerCase().includes(needle)
+        || (meta.counties[g.county]?.name ?? '').toLowerCase().includes(needle))
       .sort((a, b) => (a.type === b.type ? a.name.localeCompare(b.name) : (TYPE_LABEL[a.type] ?? a.type).localeCompare(TYPE_LABEL[b.type] ?? b.type)))
-  }, [groups, q])
+  }, [groups, q, meta.counties])
 
   const onFile = async (file: File | undefined) => {
     if (!file) return
@@ -131,13 +134,22 @@ function DistrictPicker({ groups, presets, selection, onSelectDistrict, onCustom
   return (
     <section className="picker">
       <div className="label">Area</div>
-      <div className="chips">
-        {presets.map((p) => (
-          <button key={p.id} className={`chip ${selection?.key === p.id ? 'on' : ''}`} onClick={() => onSelectDistrict(p.id, p.label)}>
-            {p.label}
-          </button>
-        ))}
-      </div>
+      {Object.entries(meta.counties).map(([slug, c]) => {
+        const ps = presets.filter((p) => p.county === slug)
+        if (!ps.length) return null
+        return (
+          <div key={slug} className="preset-group">
+            <div className="preset-county">{c.name}</div>
+            <div className="chips">
+              {ps.map((p) => (
+                <button key={p.id} className={`chip ${selection?.key === p.id ? 'on' : ''}`} onClick={() => onSelectDistrict(p.id, p.label)}>
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )
+      })}
       <div className="picker-row">
         <div className="combo">
           <input
@@ -155,7 +167,7 @@ function DistrictPicker({ groups, presets, selection, onSelectDistrict, onCustom
                 <li key={g.id}>
                   <button onMouseDown={(e) => e.preventDefault()} onClick={() => { onSelectDistrict(g.id); setOpen(false); setQ('') }}>
                     <span>{g.name}</span>
-                    <small>{TYPE_LABEL[g.type] ?? g.type}</small>
+                    <small>{TYPE_LABEL[g.type] ?? g.type} · {meta.counties[g.county]?.name ?? g.county}</small>
                   </button>
                 </li>
               ))}
@@ -293,7 +305,7 @@ function Outputs(p: Props & { base: BaseStats; idx: PropIndex }) {
       `Added cost per residential property: median ${fmtUSD2(dist.median * scale)}, P25 ${fmtUSD2(dist.p25 * scale)}, P75 ${fmtUSD2(dist.p75 * scale)}, P90 ${fmtUSD2(dist.p90 * scale)}, mean ${fmtUSD2(dist.mean * scale)}`,
       `A $378,000 homestead pays ${fmtUSD2(EXAMPLE_HOME_TAXABLE * scale)} per year`,
       `Revenue share: residential ${fmtPct(resShare)}, commercial ${fmtPct(commShare)}; incorporated cities ${fmtPct(cityShare)}`,
-      'General property taxes only. Source: Montana DOR ORION; Gallatin County.',
+      'General property taxes only. Source: Montana DOR ORION; Gallatin and Yellowstone County Treasurers.',
     ].join('\n')
 
   const copy = () => navigator.clipboard?.writeText(summary()).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500) }, () => {})
@@ -318,7 +330,7 @@ function Outputs(p: Props & { base: BaseStats; idx: PropIndex }) {
   }
 
   if (!base.nProps) {
-    return <p className="note">No properties fall inside this area. Try a larger shape, or check that it overlaps Gallatin County.</p>
+    return <p className="note">No properties fall inside this area. Try a larger shape, or check that it overlaps Gallatin or Yellowstone County.</p>
   }
 
   return (
@@ -340,7 +352,7 @@ function Outputs(p: Props & { base: BaseStats; idx: PropIndex }) {
         </div>
       </section>
 
-      <BaseAdjustments base={base} mills={mills} meta={p.meta} year={year} selectionKey={selection?.key} />
+      <BaseAdjustments base={base} mills={mills} meta={p.meta} year={year} selection={selection} />
 
       <section className="counts">
         <div><b>{fmtInt(base.nProps)}</b><span>properties</span></div>
@@ -431,11 +443,26 @@ function Outputs(p: Props & { base: BaseStats; idx: PropIndex }) {
   )
 }
 
-const NON_REAL_KEY: Record<string, string> = { 'city-bozeman': 'BOZEMAN', 'city-belgrade': 'BELGRAD' }
+const NON_REAL_KEY: Record<string, string> = {
+  'city-bozeman': 'BOZEMAN',
+  'city-belgrade': 'BELGRAD',
+  'ys-city-billings': 'BLGS',
+  'ys-city-laurel': 'LAUREL',
+}
+const JURIS_NAME: Record<string, string> = {
+  CNTYWID: 'Gallatin County',
+  BOZEMAN: 'City of Bozeman',
+  BELGRAD: 'City of Belgrade',
+  COWDLVY: 'Yellowstone County',
+  BLGS: 'City of Billings',
+  LAUREL: 'City of Laurel',
+}
 
-function BaseAdjustments({ base, mills, meta, year, selectionKey }: { base: BaseStats; mills: number; meta: Meta; year: Year; selectionKey?: string }) {
-  const nrKey = (selectionKey && NON_REAL_KEY[selectionKey]) || 'CNTYWID'
-  const nr = meta.non_real?.[year]?.[nrKey]
+function BaseAdjustments({ base, mills, meta, year, selection }: { base: BaseStats; mills: number; meta: Meta; year: Year; selection: Selection | null }) {
+  // City selections use the city's certified ratio; anything else uses its county's. A shape spanning two counties gets no estimate.
+  const single = selection?.counties.length === 1 ? meta.counties[selection.counties[0]] : undefined
+  const nrKey = (selection && NON_REAL_KEY[selection.key]) || single?.juris.county
+  const nr = nrKey ? meta.non_real?.[year]?.[nrKey] : undefined
   const netTaxable = base.taxable - base.tifIncrement
   if (base.tifIncrement <= 0 && !nr) return null
   return (
@@ -468,12 +495,12 @@ function BaseAdjustments({ base, mills, meta, year, selectionKey }: { base: Base
         </tbody>
       </table>
       {base.tifIncrement > 0 && (
-        <p className="small muted">Mills levied on a TIF district's increment go to the TIF (Bozeman, Belgrade urban renewal districts), not to the levying district.</p>
+        <p className="small muted">Mills levied on a TIF district's increment go to the TIF (the urban renewal districts in Bozeman, Belgrade, Billings and Laurel), not to the levying district.</p>
       )}
       {nr && (
         <p className="small muted">
           Not mapped: personal property and centrally assessed utilities and railroads would add roughly <b>{fmtPct(nr.non_real_ratio)}</b> to the base
-          ({nrKey === 'CNTYWID' ? 'county-wide' : nrKey === 'BOZEMAN' ? 'City of Bozeman' : 'City of Belgrade'} DOR certified TY{year}), about {fmtUSD(netTaxable / 1000 * nr.non_real_ratio)} per mill here.
+          ({JURIS_NAME[nrKey!] ?? nrKey} DOR certified TY{year}), about {fmtUSD(netTaxable / 1000 * nr.non_real_ratio)} per mill here.
         </p>
       )}
     </section>

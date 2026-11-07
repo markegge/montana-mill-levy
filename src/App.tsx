@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Calculator from './calc/Calculator'
 import { groupDistricts, resolvePresets, selectionForDistrict } from './calc/districts'
-import { COUNTY_ID } from './calc/select'
-import { selectProperties, type AreaFeature, type Selection } from './calc/select'
+import { countiesForShapes, selectProperties, type AreaFeature, type Selection } from './calc/select'
 import { computeBase, taxableBreaks } from './calc/stats'
-import { loadCondos, loadCore, loadIndex, type CoreData } from './data/load'
+import { concatIndexes, loadCondos, loadCore, loadCountyIndex, type CoreData } from './data/load'
 import type { Condos, PropIndex, Year } from './data/types'
-import { MapController, type PickEvent, type ViewState } from './map/controller'
+import { COUNTY_VIEWS, MapController, type PickEvent, type ViewState } from './map/controller'
 import { COLOR_MODES, type ColorMode } from './map/style'
 import PropertyPanel, { YearToggle } from './panel/PropertyPanel'
 import About from './ui/About'
@@ -18,8 +17,9 @@ const initialUrl = readUrl()
 export default function App() {
   const [core, setCore] = useState<CoreData | null>(null)
   const [coreErr, setCoreErr] = useState<string | null>(null)
-  const [idx, setIdx] = useState<PropIndex | null>(null)
-  const [progress, setProgress] = useState(0)
+  const [indexes, setIndexes] = useState<Record<string, PropIndex>>({})
+  const [progress, setProgress] = useState<Record<string, number>>({})
+  const [viewCounty, setViewCounty] = useState<string | null>(null)
   const [condos, setCondos] = useState<Condos | null>(null)
   const [year, setYear] = useState<Year>(initialUrl.year ?? '2026')
   const [mills, setMills] = useState(initialUrl.mills ?? 5)
@@ -39,19 +39,45 @@ export default function App() {
   useEffect(() => {
     loadCore().then((c) => {
       setCore(c)
-      // Initial district from the URL, else the whole county.
+      // Initial district from the URL, else Gallatin County.
       const gs = groupDistricts(c.districts)
-      const g = gs.get(initialUrl.district ?? COUNTY_ID) ?? gs.get(COUNTY_ID)
-      if (g) setSelection(selectionForDistrict(g, resolvePresets(gs).find((p) => p.id === g.id)?.label))
+      const g = gs.get(initialUrl.district ?? 'gallatin-county') ?? gs.get('gallatin-county')
+      if (g) {
+        // A shared link with a district but no map position should land on that district.
+        fitNext.current = !initialUrl.view && !!initialUrl.district
+        setSelection(selectionForDistrict(g, c.meta, resolvePresets(gs).find((p) => p.id === g.id)?.label))
+      }
     }, (e: Error) => setCoreErr(e.message))
-    loadIndex(setProgress).then(
-      (i) => {
-        setIdx(i)
-        loadCondos().then(setCondos, () => console.warn('condos.json failed to load; condo unit counts unavailable'))
-      },
-      (e: Error) => setCoreErr(e.message),
-    )
   }, [])
+
+  // Property indexes load per county, only when the selection needs them.
+  const needed = useMemo(() => selection?.counties ?? [], [selection])
+  const started = useRef(new Set<string>())
+  useEffect(() => {
+    if (!core) return
+    for (const county of needed) {
+      if (started.current.has(county)) continue
+      const cm = core.meta.counties[county]
+      if (!cm) continue
+      started.current.add(county)
+      loadCountyIndex(county, cm.index, (f) => setProgress((p) => ({ ...p, [county]: f }))).then(
+        (i) => {
+          setIndexes((x) => ({ ...x, [county]: i }))
+          loadCondos().then(setCondos, () => console.warn('condos.json failed to load; condo unit counts unavailable'))
+        },
+        (e: Error) => setCoreErr(e.message),
+      )
+    }
+  }, [core, needed])
+
+  const idx = useMemo(() => {
+    if (!needed.every((c) => indexes[c])) return null
+    return concatIndexes(needed.map((c) => indexes[c]))
+  }, [needed, indexes])
+  const loadingCounties = needed.filter((c) => !indexes[c])
+  const loadProgress = loadingCounties.length
+    ? loadingCounties.reduce((s, c) => s + Math.max(0, progress[c] ?? 0), 0) / loadingCounties.length
+    : 1
 
   const groups = useMemo(() => (core ? groupDistricts(core.districts) : new Map()), [core])
   const presets = useMemo(() => resolvePresets(groups, groups.size > 0), [groups])
@@ -64,7 +90,11 @@ export default function App() {
       meta: core.meta,
       view: initialUrl.view,
       onPick: (e) => setPick(e),
-      onMove: (v: ViewState) => writeUrl({ view: v }),
+      onMove: (v: ViewState) => {
+        writeUrl({ view: v })
+        const inside = Object.entries(core.meta.counties).find(([, c]) => v.lon >= c.bbox[0] && v.lon <= c.bbox[2] && v.lat >= c.bbox[1] && v.lat <= c.bbox[3])
+        setViewCounty(inside ? inside[0] : null)
+      },
       onReady: () => setMapReady(true),
     })
     if (import.meta.env.DEV) (window as unknown as { __mill: MapController }).__mill = ctrl.current
@@ -114,9 +144,10 @@ export default function App() {
 
   useEffect(() => {
     if (!ctrl.current || !selection) return
-    ctrl.current.setArea(selection.all ? [] : selection.features, fitNext.current)
+    const county = selection.all && core ? core.meta.counties[selection.counties[0]] : undefined
+    ctrl.current.setArea(selection.all ? [] : selection.features, fitNext.current, county?.bbox)
     fitNext.current = false
-  }, [selection, mapReady])
+  }, [selection, mapReady, core])
 
   useEffect(() => {
     ctrl.current?.setBuildingsVisible(buildings)
@@ -139,19 +170,27 @@ export default function App() {
       const g = groups.get(id)
       if (!g) return
       fitNext.current = true
-      setSelection(selectionForDistrict(g, label ?? presets.find((p) => p.id === id)?.label))
+      if (!core) return
+      setSelection(selectionForDistrict(g, core.meta, label ?? presets.find((p) => p.id === id)?.label))
     },
-    [groups, presets],
+    [groups, presets, core],
   )
 
   const onCustom = useCallback((features: AreaFeature[], label: string, append: boolean) => {
+    if (!core) return
     setSelection((cur) => {
       const prev = append && cur?.kind === 'custom' ? cur.features : []
       const all = [...prev, ...features]
       fitNext.current = !append
-      return { key: 'custom', kind: 'custom', label: append && prev.length ? `Drawn area (${all.length} shapes)` : label, features: all }
+      return {
+        key: 'custom',
+        kind: 'custom',
+        label: append && prev.length ? `Drawn area (${all.length} shapes)` : label,
+        features: all,
+        counties: countiesForShapes(all, core.meta),
+      }
     })
-  }, [])
+  }, [core])
 
   const onDraw = useCallback(
     (kind: 'polygon' | 'rectangle' | null) => {
@@ -198,13 +237,27 @@ export default function App() {
           <div className="brand-title">
             <h1>Montana Mill Levy Calculator</h1>
             <p className="scope">
-              Gallatin County, MT · General property taxes only · special assessments excluded ·{' '}
+              Gallatin &amp; Yellowstone Counties, MT · General property taxes only · special assessments excluded ·{' '}
               {core ? <>DOR ORION data as of {core.meta.vintages.orion ?? core.meta.generated}</> : 'loading…'}{' '}
               <button className="linkish" onClick={() => setAbout(true)}>Methods &amp; caveats</button>
             </p>
           </div>
         </div>
         <div className="top-controls">
+          {core && (
+            <div className="seg county-switch" role="group" aria-label="Fly to county">
+              {Object.entries(core.meta.counties).map(([slug, c]) => (
+                <button
+                  key={slug}
+                  className={viewCounty === slug ? 'on' : ''}
+                  onClick={() => ctrl.current?.flyTo(COUNTY_VIEWS[slug] ?? { center: [(c.bbox[0] + c.bbox[2]) / 2, (c.bbox[1] + c.bbox[3]) / 2], zoom: 10 })}
+                  title={`Fly to ${c.name}`}
+                >
+                  {c.name.replace(/ County$/, '')}
+                </button>
+              ))}
+            </div>
+          )}
           <label className="select">
             <span>Color by</span>
             <select value={mode} onChange={(e) => setMode(e.target.value as ColorMode)}>
@@ -228,7 +281,8 @@ export default function App() {
           <aside className="calc-panel">
             <Calculator
               idx={idx}
-              progress={progress}
+              progress={loadProgress}
+              loadingLabel={loadingCounties.map((c) => core.meta.counties[c]?.name ?? c).join(' and ')}
               levies={core.levies}
               meta={core.meta}
               year={year}
@@ -253,7 +307,7 @@ export default function App() {
         )}
         {core && pick && (
           <aside className="prop-panel" aria-label="Property details">
-            <PropertyPanel pick={pick} year={year} levies={core.levies} onYear={setYear} onClose={() => setPick(null)} />
+            <PropertyPanel pick={pick} year={year} levies={core.levies} meta={core.meta} onYear={setYear} onClose={() => setPick(null)} />
           </aside>
         )}
         {core && (

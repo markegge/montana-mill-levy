@@ -54,28 +54,17 @@ export async function loadCore(): Promise<CoreData> {
 
 type RawIndex = { cols: string[]; rows: (string | number | null)[][] }
 
-export async function loadIndex(onProgress: (f: number) => void): Promise<PropIndex> {
-  const raw = await getJSONWithProgress<RawIndex>('parcels_index.json', onProgress)
+function parseIndex(raw: RawIndex, county: string): PropIndex {
   const c = (name: string) => {
     const i = raw.cols.indexOf(name)
-    if (i < 0) throw new Error(`parcels_index.json is missing column "${name}"`)
+    if (i < 0) throw new Error(`${county} parcel index is missing column "${name}"`)
     return i
   }
   const [iPid, iLon, iLat, iLevy, iTv26, iTax26, iTv25, iTax25, iCat26, iCat25, iHh] = [
     'pid', 'lon', 'lat', 'levy', 'tv26', 'tax26', 'tv25', 'tax25', 'cat26', 'cat25', 'hh',
   ].map(c)
   const n = raw.rows.length
-  const idx: PropIndex = {
-    n,
-    pid: new Array(n),
-    lon: new Float64Array(n),
-    lat: new Float64Array(n),
-    levy: new Int32Array(n),
-    tv: { '2026': new Float64Array(n), '2025': new Float64Array(n) },
-    tax: { '2026': new Float64Array(n), '2025': new Float64Array(n) },
-    cat: { '2026': new Int8Array(n), '2025': new Int8Array(n) },
-    hh: new Float32Array(n),
-  }
+  const idx = emptyIndex(n, [county])
   const num = (v: unknown) => (typeof v === 'number' ? v : v == null ? 0 : Number(v) || 0)
   for (let i = 0; i < n; i++) {
     const r = raw.rows[i]
@@ -92,6 +81,56 @@ export async function loadIndex(onProgress: (f: number) => void): Promise<PropIn
     idx.hh[i] = num(r[iHh])
   }
   return idx
+}
+
+function emptyIndex(n: number, counties: string[]): PropIndex {
+  return {
+    counties,
+    n,
+    pid: new Array(n),
+    lon: new Float64Array(n),
+    lat: new Float64Array(n),
+    levy: new Int32Array(n),
+    tv: { '2026': new Float64Array(n), '2025': new Float64Array(n) },
+    tax: { '2026': new Float64Array(n), '2025': new Float64Array(n) },
+    cat: { '2026': new Int8Array(n), '2025': new Int8Array(n) },
+    hh: new Float32Array(n),
+  }
+}
+
+const indexPromises = new Map<string, Promise<PropIndex>>()
+
+/** One county's property index (lazy, cached). `levy` values index the merged levies.codes. */
+export function loadCountyIndex(county: string, file: string, onProgress: (f: number) => void): Promise<PropIndex> {
+  let p = indexPromises.get(county)
+  if (!p) {
+    p = getJSONWithProgress<RawIndex>(file, onProgress).then((raw) => parseIndex(raw, county))
+    p.catch(() => indexPromises.delete(county))
+    indexPromises.set(county, p)
+  }
+  return p
+}
+
+/** Rows of several county indexes, concatenated in the given order. */
+export function concatIndexes(parts: PropIndex[]): PropIndex {
+  if (parts.length === 1) return parts[0]
+  const n = parts.reduce((s, p) => s + p.n, 0)
+  const out = emptyIndex(n, parts.flatMap((p) => p.counties))
+  let off = 0
+  for (const p of parts) {
+    for (let i = 0; i < p.n; i++) out.pid[off + i] = p.pid[i]
+    out.lon.set(p.lon, off)
+    out.lat.set(p.lat, off)
+    out.levy.set(p.levy, off)
+    for (const y of ['2026', '2025'] as const) {
+      out.tv[y].set(p.tv[y], off)
+      out.tax[y].set(p.tax[y], off)
+      out.cat[y].set(p.cat[y], off)
+    }
+    out.hh.set(p.hh, off)
+    off += p.n
+  }
+  return out
 }
 
 let condosPromise: Promise<Condos> | null = null

@@ -1,0 +1,384 @@
+{
+ "retrieved": "2026-11-07",
+ "source": "https://svc.mt.gov/dor/oriondataportal/Public/PropertyMTGov/CertifiedValues.aspx",
+ "jurisdictions": {
+  "2026": {
+   "COWDLVY": {
+    "label": "COUNTY-WIDE LEVY",
+    "values": {
+     "Special Mobile - Market Value": 0,
+     "Special Mobile - Taxable Value": 0,
+     "Manufactured Homes - Market Value": 297933416,
+     "Manufactured Homes - Taxable Value": 3801122,
+     "Personal Property - Market Value": 478585471,
+     "Personal Property - Taxable Value": 9877836,
+     "Real Property - Market Value": 32057013152,
+     "Real Property - Taxable Value": 386256136,
+     "Centrally Assessed - Market Value": 1318901949,
+     "Centrally Assessed - Taxable Value": 87713658,
+     "Net & Gross Proceeds - Market Value": null,
+     "Net & Gross Proceeds - Taxable Value": 0,
+     "Total - Market Value": 34152433988,
+     "Total - Taxable Value": 487648752,
+     "Newly Taxable - Market Value": null,
+     "Newly Taxable - Taxable Value": 10260818,
+     "TIF Increment - Market Value": null,
+     "TIF Increment - Taxable Value": 16433273
+    }
+   },
+   "BLGS": {
+    "label": "CITY OF BILLINGS",
+    "values": {
+     "Special Mobile - Market Value": 0,
+     "Special Mobile - Taxable Value": 0,
+     "Manufactured Homes - Market Value": 165556676,
+     "Manufactured Homes - Taxable Value": 1979156,
+     "Personal Property - Market Value": 215083558,
+     "Personal Property - Taxable Value": 3384555,
+     "Real Property - Market Value": 20515778738,
+     "Real Property - Taxable Value": 226728714,
+     "Centrally Assessed - Market Value": 430673784,
+     "Centrally Assessed - Taxable Value": 32108218,
+     "Net & Gross Proceeds - Market Value": null,
+     "Net & Gross Proceeds - Taxable Value": 0,
+     "Total - Market Value": 21327092756,
+     "Total - Taxable Value": 264200643,
+     "Newly Taxable - Market Value": null,
+     "Newly Taxable - Taxable Value": 4715633,
+     "TIF Increment - Market Value": null,
+     "TIF Increment - Taxable Value": 13612002
+    }
+   },
+   "LAUREL": {
+    "label": "CITY OF LAUREL",
+    "values": {
+     "Special Mobile - Market Value": 0,
+     "Special Mobile - Taxable Value": 0,
+     "Manufactured Homes - Market Value": 15297440,
+     "Manufactured Homes - Taxable Value": 226893,
+     "Personal Property - Market Value": 10434012,
+     "Personal Property - Taxable Value": 251006,
+     "Real Property - Market Value": 905863108,
+     "Real Property - Taxable Value": 9503178,
+     "Centrally Assessed - Market Value": 21015305,
+     "Centrally Assessed - Taxable Value": 1682279,
+     "Net & Gross Proceeds - Market Value": null,
+     "Net & Gross Proceeds - Taxable Value": 0,
+     "Total - Market Value": 952609865,
+     "Total - Taxable Value": 11663356,
+     "Newly Taxable - Market Value": null,
+     "Newly Taxable - Taxable Value": 181250,
+     "TIF Increment - Market Value": null,
+     "TIF Increment - Taxable Value": 2128045
+    }
+   },
+   "BRDVIEW": {
+    "label": "CITY OF BROADVIEW",
+    "values": {
+     "Special Mobile - Market Value": 0,
+     "Special Mobile - Taxable Value": 0,
+     "Manufactured Homes - Market Value": 624690,
+     "Manufactured Homes - Taxable Value": 8456,
+     "Personal Property - Market Value": 10858,
+     "Personal Property - Taxable Value": 192,
+     "Real Property - Market Value": 17779401,
+     "Real Property - Taxable Value": 178209,
+     "Centrally Assessed - Market Value": 1351633,
+     "Centrally Assessed - Taxable Value": 66329,
+     "Net & Gross Proceeds - Market Value": null,
+     "Net & Gross Proceeds - Taxable Value": 0,
+     "Total - Market Value": 19766582,
+     "Total - Taxable Value": 253186,
+     "Newly Taxable - Market Value": null,
+     "Newly Taxable - Taxable Value": 10615,
+     "TIF Increment - Market Value": null,
+     "TIF Increment - Taxable Value": 0
+    }
+   }
+  },
+  "2025": {
+   "COWDLVY": {
+    "label": "COUNTY-WIDE LEVY",
+    "values": {
+     "Special Mobile - Market Value": 56968,
+     "Special Mobile - Taxable Value": 1751,
+     "Manufactured Homes - Market Value": 292430616,
+     "Manufactured Homes - Taxable Value": 2043642,
+     "Personal Property - Market Value": 423169266,
+     "Personal Property - Taxable Value": 8237112,
+     "Real Property - Market Value": 32008577622,
+     "Real Property - Taxable Value": 365846653,
+     "Centrally Assessed - Market Value": 1245863350,
+     "Centrally Assessed - Taxable Value": 83932251,
+     "Net & Gross Proceeds - Market Value": null,
+     "Net & Gross Proceeds - Taxable Value": 0,
+     "Total - Market Value": 33970040854,
+     "Total - Taxable Value": 460061409,
+     "Newly Taxable - Market Value": null,
+     "Newly Taxable - Taxable Value": 14015901,
+     "TIF Increment - Market Value": null,
+     "TIF Increment - Taxable Value": 15074437
+    }
+   },
+   "BLGS": {
+    "label": "CITY OF BILLINGS",
+    "values": {
+     "Special Mobile - Market Value": 0,
+     "Special Mobile - Taxable Value": 0,
+     "Manufactured Homes - Market Value": 161486666,
+     "Manufactured Homes - Taxable Value": 1097336,
+     "Personal Property - Market Value": 215706565,
+     "Personal Property - Taxable Value": 3335646,
+     "Real Property - Market Value": 20322586042,
+     "Real Property - Taxable Value": 210422543,
+     "Centrally Assessed - Market Value": 408097606,
+     "Centrally Assessed - Taxable Value": 30346390,
+     "Net & Gross Proceeds - Market Value": null,
+     "Net & Gross Proceeds - Taxable Value": 0,
+     "Total - Market Value": 21107876879,
+     "Total - Taxable Value": 245201915,
+     "Newly Taxable - Market Value": null,
+     "Newly Taxable - Taxable Value": 5135236,
+     "TIF Increment - Market Value": null,
+     "TIF Increment - Taxable Value": 12352969
+    }
+   },
+   "LAUREL": {
+    "label": "CITY OF LAUREL",
+    "values": {
+     "Special Mobile - Market Value": 0,
+     "Special Mobile - Taxable Value": 0,
+     "Manufactured Homes - Market Value": 14531860,
+     "Manufactured Homes - Taxable Value": 105712,
+     "Personal Property - Market Value": 10897927,
+     "Personal Property - Taxable Value": 257338,
+     "Real Property - Market Value": 901324309,
+     "Real Property - Taxable Value": 8297156,
+     "Centrally Assessed - Market Value": 19810372,
+     "Centrally Assessed - Taxable Value": 1579508,
+     "Net & Gross Proceeds - Market Value": null,
+     "Net & Gross Proceeds - Taxable Value": 0,
+     "Total - Market Value": 946564468,
+     "Total - Taxable Value": 10239714,
+     "Newly Taxable - Market Value": null,
+     "Newly Taxable - Taxable Value": 40056,
+     "TIF Increment - Market Value": null,
+     "TIF Increment - Taxable Value": 2184927
+    }
+   },
+   "BRDVIEW": {
+    "label": "CITY OF BROADVIEW",
+    "values": {
+     "Special Mobile - Market Value": 0,
+     "Special Mobile - Taxable Value": 0,
+     "Manufactured Homes - Market Value": 545900,
+     "Manufactured Homes - Taxable Value": 3861,
+     "Personal Property - Market Value": 9150,
+     "Personal Property - Taxable Value": 167,
+     "Real Property - Market Value": 17668600,
+     "Real Property - Taxable Value": 133644,
+     "Centrally Assessed - Market Value": 1320671,
+     "Centrally Assessed - Taxable Value": 65594,
+     "Net & Gross Proceeds - Market Value": null,
+     "Net & Gross Proceeds - Taxable Value": 0,
+     "Total - Market Value": 19544321,
+     "Total - Taxable Value": 203266,
+     "Newly Taxable - Market Value": null,
+     "Newly Taxable - Taxable Value": 4167,
+     "TIF Increment - Market Value": null,
+     "TIF Increment - Taxable Value": 0
+    }
+   }
+  }
+ },
+ "options_2026": [
+  [
+   "203-2026-TJ-03-0965-1",
+   "SD 2 - BLGS ELEMENTARY"
+  ],
+  [
+   "203-2026-TJ-03-0965-2",
+   "BILLINGS HIGH SCHOOL"
+  ],
+  [
+   "203-2026-TJ-03-0968",
+   "SD 3 - BLUE CREEK ELEMENTARY"
+  ],
+  [
+   "203-2026-TJ-03-0969",
+   "SD 4 - CANYON CREEK ELEMENTARY"
+  ],
+  [
+   "203-2026-TJ-03-0970-1",
+   "SD 7 - LAUREL ELEMENTARY"
+  ],
+  [
+   "203-2026-TJ-03-0970-2",
+   "LAUREL HIGH SCHOOL"
+  ],
+  [
+   "203-2026-TJ-03-0970-3",
+   "SD 7D - LAUREL ELEMENTARY"
+  ],
+  [
+   "203-2026-TJ-03-0972",
+   "SD 8 - ELDERGROVE ELEMENTARY"
+  ],
+  [
+   "203-2026-TJ-03-0976",
+   "SD 17- MORIN ELEMENTARY"
+  ],
+  [
+   "203-2026-TJ-03-0978-2",
+   "SD 21J BROADVIEW (K-12)"
+  ],
+  [
+   "203-2026-TJ-03-0981",
+   "SD 23 -ELYSIAN ELEMENTARY"
+  ],
+  [
+   "203-2026-TJ-03-0982",
+   "SD 24 - HUNTLEY HIGH SCHOOL (K-12)"
+  ],
+  [
+   "203-2026-TJ-03-0985-1",
+   "SD 37 - SHEPHERD ELEMENTARY"
+  ],
+  [
+   "203-2026-TJ-03-0985-2",
+   "SD 37-SHEPHERD HIGH SCHOOL"
+  ],
+  [
+   "203-2026-TJ-03-0987",
+   "SD 41 - PIONEER ELEMENTARY"
+  ],
+  [
+   "203-2026-TJ-03-0989",
+   "SD 52 - INDEPENDENT ELEMENTARY"
+  ],
+  [
+   "203-2026-TJ-03-1196",
+   "SD 58 - YBGR ELEMENTARY"
+  ],
+  [
+   "203-2026-TJ-03-1241",
+   "SD 26 - LOCKWOOD K-12"
+  ],
+  [
+   "203-2026-TJ-03-1974",
+   "SD 15 - CUSTER HIGH SCHOOL (K-12)"
+  ],
+  [
+   "203-2026-TJ-03-BFD3",
+   "BROADVIEW FIRE DISTRICT"
+  ],
+  [
+   "203-2026-TJ-03-BHSDEBT",
+   "BILLINGS HIGH SCHOOL DEBT SERVICE"
+  ],
+  [
+   "203-2026-TJ-03-BLGS",
+   "CITY OF BILLINGS"
+  ],
+  [
+   "203-2026-TJ-03-BRDVIEW",
+   "CITY OF BROADVIEW"
+  ],
+  [
+   "203-2026-TJ-03-BSEDA",
+   "BIG SKY DEVELOPMENT AUTHORITY"
+  ],
+  [
+   "203-2026-TJ-03-BVCEM",
+   "BROADVIEW CEMETERY"
+  ],
+  [
+   "203-2026-TJ-03-COHIGHS",
+   "COUNTY WIDE HIGH SCHOOL"
+  ],
+  [
+   "203-2026-TJ-03-COPLAN",
+   "COUNTY PLANNING"
+  ],
+  [
+   "203-2026-TJ-03-COWDLVY",
+   "COUNTY-WIDE LEVY"
+  ],
+  [
+   "203-2026-TJ-03-CUSTCEM",
+   "CUSTER CEMETERY"
+  ],
+  [
+   "203-2026-TJ-03-GENELEM",
+   "GENERAL SCHOOL ELEMENTARY"
+  ],
+  [
+   "203-2026-TJ-03-HUNTCEM",
+   "HUNTLEY CEMETERY"
+  ],
+  [
+   "203-2026-TJ-03-LAUREL",
+   "CITY OF LAUREL"
+  ],
+  [
+   "203-2026-TJ-03-LCKWDFD",
+   "LOCKWOOD FIRE DISTRICT #8"
+  ],
+  [
+   "203-2026-TJ-03-LFD5",
+   "LAUREL FIRE DISTRICT #5"
+  ],
+  [
+   "203-2026-TJ-03-LFD7",
+   "LAUREL FIRE DISTRICT #7"
+  ],
+  [
+   "203-2026-TJ-03-LIBRARY",
+   "LIBRARY TAXING"
+  ],
+  [
+   "203-2026-TJ-03-LKWDWS1",
+   "LOCKWOOD WATER & SEWER DIST PHASE 1"
+  ],
+  [
+   "203-2026-TJ-03-LKWPEDL",
+   "LOCKWOOD PEDESTRIAN LEVY"
+  ],
+  [
+   "203-2026-TJ-03-LRLPLAN",
+   "LAUREL COUNTY PLANNING"
+  ],
+  [
+   "203-2026-TJ-03-RETTRAN",
+   "SCHOOL RETIREMENT & TRANSPORTATION"
+  ],
+  [
+   "203-2026-TJ-03-ROAD",
+   "COUNTY ROAD FUND"
+  ],
+  [
+   "203-2026-TJ-03-SHEPCEM",
+   "SHEPHERD CEMETERY"
+  ],
+  [
+   "203-2026-TJ-03-SOIL",
+   "SOIL CONSERVATION"
+  ],
+  [
+   "203-2026-TJ-03-STEDUC",
+   "STATE EDUCATION"
+  ],
+  [
+   "203-2026-TJ-03-VOTECH",
+   "STATE VO-TECH"
+  ],
+  [
+   "203-2026-TJ-03-WDF4",
+   "WORDEN FIRE DISTRICT"
+  ],
+  [
+   "203-2026-TJ-03-WEED",
+   "WEED CONTROL"
+  ]
+ ]
+}

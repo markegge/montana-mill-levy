@@ -12,6 +12,11 @@ import {
 
 export const BASEMAP = 'https://tiles.openfreemap.org/styles/positron'
 export const HOME_VIEW = { center: [-111.04, 45.68] as [number, number], zoom: 12.5, pitch: 45, bearing: 0 }
+/** Where the header's county switcher flies to (each county's main city). */
+export const COUNTY_VIEWS: Record<string, { center: [number, number]; zoom: number }> = {
+  gallatin: { center: HOME_VIEW.center, zoom: 12.5 },
+  yellowstone: { center: [-108.53, 45.78], zoom: 12.5 },
+}
 
 let protocolAdded = false
 function ensureProtocol() {
@@ -84,10 +89,12 @@ export class MapController {
     )
     this.popup = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 12, className: 'hover-tip', maxWidth: '280px' })
     this.map.on('load', () => this.onLoad())
-    this.map.on('moveend', () => {
+    const emitMove = () => {
       const c = this.map.getCenter()
       opts.onMove({ zoom: this.map.getZoom(), lat: c.lat, lon: c.lng, pitch: this.map.getPitch(), bearing: this.map.getBearing() })
-    })
+    }
+    this.map.on('moveend', emitMove)
+    this.map.once('load', emitMove)
   }
 
   private onLoad() {
@@ -236,10 +243,12 @@ export class MapController {
     this.applyStyle()
   }
 
-  setArea(features: Feature<Polygon | MultiPolygon>[], fit: boolean) {
+  setArea(features: Feature<Polygon | MultiPolygon>[], fit: boolean, fitBbox?: [number, number, number, number]) {
     const fc: FeatureCollection = { type: 'FeatureCollection', features }
     const apply = () => {
       ;(this.map.getSource('area') as GeoJSONSource | undefined)?.setData(fc)
+      const pad = { top: 80, bottom: 80, left: window.innerWidth > 768 ? 440 : 30, right: 60 }
+      if (fit && !features.length && fitBbox) this.map.fitBounds(fitBbox, { padding: pad, duration: 900 })
       if (fit && features.length) {
         let [w, s, e, n] = [180, 90, -180, -90]
         const walk = (c: unknown): void => {
@@ -395,8 +404,8 @@ export class MapController {
     setTimeout(() => { this.drawing = false }, 50)
   }
 
-  flyHome() {
-    this.map.flyTo({ ...HOME_VIEW, duration: 1200 })
+  flyTo(v: { center: [number, number]; zoom: number }) {
+    this.map.flyTo({ ...v, pitch: Math.max(this.map.getPitch(), 30), duration: 1600, essential: true })
   }
 
   resize() {

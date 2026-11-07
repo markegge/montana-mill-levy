@@ -19,9 +19,12 @@ import pandas as pd
 import requests
 
 ROOT = Path(__file__).resolve().parents[1]
-D = ROOT / "data" / "derived"
+from county import county_from_argv
+
+C = county_from_argv()
+D = C.derived
 REF = ROOT / "data" / "reference"
-CACHE = ROOT / "data" / "raw" / "itax"
+CACHE = C.raw / "itax"
 CACHE.mkdir(parents=True, exist_ok=True)
 UA = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) mill-levy research"}
 
@@ -32,7 +35,7 @@ def fetch_pdf(ac: str) -> Path | None:
     out = CACHE / f"2026_{ac}.pdf"
     if out.exists() and out.stat().st_size > 1000:
         return out
-    url = f"https://itax.gallatin.mt.gov/PDF/2026/RE/{ac}.pdf"
+    url = f"{C.itax_host}/PDF/2026/RE/{ac}.pdf"
     for attempt in range(3):
         try:
             r = requests.get(url, headers=UA, timeout=60)
@@ -110,19 +113,22 @@ def parse_pdf(path: Path) -> dict:
     return res
 
 
-CITY_PREFIX = re.compile(r"^(bzn|bozeman|belgrade|manhattan|tf |three forks|town of|city of|west yellowstone|wy )")
+CITY_PREFIX = re.compile(r"^(bzn|bozeman|belgrade|manhattan|tf |three forks|town of|city of|west yellowstone|wy |billings-|laurel|broadview)")
 
 
 def group_of(header: str | None, name: str) -> str:
     h = (header or "").lower(); n = name.lower()
-    if h in ("state school", "university"):
+    if h in ("state school", "university", "state"):
         return "State"
     if h in ("county", "public safety"):
         return "County"
-    if h.startswith("fire"):
+    if h == "city" or (h not in ("school",) and CITY_PREFIX.match(n)):
+        return "City"
+    if h.startswith("fire") or (h not in ("school", "city/rural") and "fire" in n):
         return "Fire"
     if h == "school":
-        if n.startswith("countywide"):
+        # countywide school levies (retirement, transportation, base funding) are grouped with the county
+        if n.startswith("countywide") or not re.match(r"\*{0,2}\s*sd\b", n):
             return "County"
         if re.search(r"\bhs\b|high", n):
             return "High school"
@@ -136,6 +142,86 @@ def group_of(header: str | None, name: str) -> str:
     if "fire" in n:
         return "Fire"
     return "Other"
+
+
+# --- Yellowstone County Treasurer (yellowstonecountymt.gov) -------------------------------------------------
+YS = "https://www.yellowstonecountymt.gov/treasurer/PropertySearch"
+
+
+def ys_fetch(property_id: int) -> Path | None:
+    """Treasurer property page (csaprop.asp, keyed by the ORION PropertyID); cached. It carries the levy
+    district's total mills and an itemized mill-levy table for the last four tax years."""
+    out = C.raw / "treasurer" / f"{property_id}.html"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    if out.exists() and out.stat().st_size > 5000:
+        return out
+    for attempt in range(3):
+        try:
+            r = requests.get(f"{YS}/csaprop.asp?propid={property_id}", headers=UA, timeout=60)
+            if r.status_code == 200 and "Itemized" in r.text:
+                out.write_text(r.text)
+                time.sleep(0.4)
+                return out
+            if r.status_code == 200:
+                return None
+        except requests.RequestException:
+            pass
+        time.sleep(2)
+    return None
+
+
+def ys_parse(path: Path) -> dict:
+    from bs4 import BeautifulSoup
+    b = BeautifulSoup(path.read_text(errors="ignore"), "html.parser")
+    res: dict = {"lines": [], "mills26": None, "mills25": None, "district_name": None}
+    m = re.search(r"Levy District:\s*([^\n(]+?)\s*\((\d+\.\d+)\s*Mills\)", b.get_text(" "))
+    if m:
+        res["district_name"] = re.sub(r"\s+", " ", m.group(1)).strip()
+        res["mills26"] = float(m.group(2))
+    title = b.find(string=lambda t: t and "Mill Levies Itemized" in t)
+    if not title:
+        return res
+    tbl = title.find_parent("table")
+    while tbl is not None and len(tbl.find_all("tr", recursive=False)) < 5:
+        tbl = tbl.find_parent("table")
+    years: list[str] = []
+    section = None
+    seen: set = set()
+    for tr in tbl.find_all("tr", recursive=False):
+        cells = tr.find_all(["td", "th"], recursive=False)
+        txt = [c.get_text(" ", strip=True) for c in cells]
+        if len(cells) == 1:
+            t = txt[0].strip()
+            if t and t.isupper() and len(t) < 30 and "ITEMIZED" not in t.upper():
+                section = t.title()
+            continue
+        if txt and txt[0].startswith("Mill Levy Description"):
+            years = txt[2:]
+            continue
+        if not years or len(cells) < 3 or not txt[0]:
+            continue
+        vals = {}
+        for y, c in zip(years, txt[2:]):
+            mm = re.search(r"\$([\d,]+\.\d\d)\s+(\d+\.\d+)", c)
+            if mm:
+                vals[y] = float(mm.group(2))
+        key = (section, txt[0])
+        if "Total" in txt[0] or key in seen:
+            continue
+        seen.add(key)
+        res["lines"].append({"header": section, "name": txt[0].lstrip("* ").strip(),
+                             "a26": vals.get("2026", 0.0), "a25": vals.get("2025", 0.0)})
+    s25 = sum(l["a25"] for l in res["lines"])
+    res["mills25"] = round(s25, 3) if s25 > 0 else None
+    return res
+
+
+def fetch_parse(ac: str, property_id: int):
+    if C.mills_source == "itax_tyler":
+        pdf = fetch_pdf(ac)
+        return parse_pdf(pdf) if pdf else None
+    page = ys_fetch(property_id)
+    return ys_parse(page) if page else None
 
 
 def book_totals_2025() -> dict[str, float]:
@@ -163,14 +249,14 @@ def main():
         mode[y] = o.groupby("levy_district").mills.agg(lambda x: x.mode().iloc[0]).to_dict()
 
     # district names / city-rural from the cadastral-style code + the 2025 book where available
-    book = book_totals_2025()
+    book = book_totals_2025() if C.slug == "gallatin" else {}
 
     codes = sorted(props.levy_district.dropna().unique())
     results = {"2026": {}, "2025": {}}
     meta = {}
     picks = []
     for code in codes:
-        base = code[:9]
+        base = code
         c = p26[(p26.levy_district == code) & (p26.taxable_total > 0) & ~p26.subcat.isin(["MH", "C_MSTR"])
                 & (p26.assessment_code.str.len() > 0)].copy()
         c["m25"] = p25.mills.reindex(c.index)
@@ -182,14 +268,17 @@ def main():
         if ok.empty:
             print("no candidate", code); continue
         ok = ok.sort_values("taxable_total", ascending=False)
-        parsed = None
+        # Prefer a sample whose billed total matches ORION's modal mills (a property can sit in a different
+        # Treasurer district than its ORION levy code says); otherwise keep the first parsable one.
+        parsed = None; first = None
         for pid_, r in ok.head(4).iterrows():
-            pdf = fetch_pdf(r.assessment_code)
-            if not pdf:
+            pr = fetch_parse(r.assessment_code, int(pid_))
+            if not (pr and pr["mills26"] and pr["lines"]):
                 continue
-            pr = parse_pdf(pdf)
-            if pr["mills26"] and pr["lines"]:
+            first = first or (pid_, r, pr)
+            if abs(pr["mills26"] - (mode[2026].get(code) or -1)) < 0.02:
                 parsed = (pid_, r, pr); break
+        parsed = parsed or first
         if not parsed:
             print("fetch/parse failed", code); continue
         pid_, r, pr = parsed
@@ -201,6 +290,10 @@ def main():
             if not tv:
                 continue
             bill_total = pr[mk]
+            if C.slug == "yellowstone" and y == "2025" and mode[2025].get(code):
+                # The Treasurer page states only the current year's district total; its TY2025 column belongs to the
+                # sample parcel's TY2025 district, which can differ. Scale TY2025 lines to ORION's modal mills.
+                bill_total = mode[2025][code]
             amt_sum = sum(ln[key] for ln in pr["lines"] if ln[key] > 0)
             if not bill_total or amt_sum <= 0:
                 continue
@@ -218,7 +311,7 @@ def main():
             tot_lines = round(sum(l["mills"] for l in lines), 4)
             raw_sum = round(sum(l["raw_mills"] or 0 for l in lines), 3)
             groups = {g: round(sum(l["mills"] for l in lines if l["group"] == g), 4) for g in GROUPS}
-            gen = pr["gen26" if y == "2026" else "gen25"]
+            gen = pr.get("gen26" if y == "2026" else "gen25")
             results[y][base if base not in results[y] else code] = {
                 "code": code, "total": bill_total, "lines_sum": tot_lines,
                 "orion_mode": mode[int(y)].get(code), "estimated": False,
@@ -237,7 +330,7 @@ def main():
         for b, v in results[y].items():
             by_total.setdefault(round(v["total"], 2), v)
         for code in codes:
-            base = code[:9]
+            base = code
             if base in results[y]:
                 continue
             o = (p26 if y == "2026" else p25)

@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { loadCondos } from '../data/load'
-import { CAT_LABEL, type CondoUnit, type Condos, type Levies, type ParcelProps, type Year } from '../data/types'
+import { CAT_LABEL, type CondoUnit, type Condos, type Meta, type Levies, type ParcelProps, type Year } from '../data/types'
 import { fmtInt, fmtMills, fmtPct, fmtUSD, fmtUSD2 } from '../format'
 import type { PickEvent } from '../map/controller'
 import { yf } from '../map/style'
@@ -9,7 +9,7 @@ import { computeBreakdown, formatGeocode, LAND_COLOR, num, STRUCT_COLOR } from '
 const BreakdownChart = lazy(() => import('./BreakdownChart'))
 
 export const CAVEAT =
-  'General property taxes only. Special assessments and fees (SIDs/RIDs, water/sewer, street maintenance) and overlay mills (conservation, open space bond, zoning) are excluded. Source: Montana DOR ORION, Gallatin County Treasurer.'
+  'General property taxes only. Special assessments and fees (SIDs/RIDs, water/sewer, street maintenance) and overlay mills (conservation, open space bond, zoning) are excluded. Source: Montana DOR ORION; Gallatin and Yellowstone County Treasurers.'
 
 const DOR_SEARCH = 'https://svc.mt.gov/dor/oriondataportal/Public/PropertyMTGov/PropertySearch.aspx'
 
@@ -32,11 +32,12 @@ interface Props {
   pick: PickEvent
   year: Year
   levies: Levies
+  meta: Meta
   onYear: (y: Year) => void
   onClose: () => void
 }
 
-export default function PropertyPanel({ pick, year, levies, onYear, onClose }: Props) {
+export default function PropertyPanel({ pick, year, levies, meta, onYear, onClose }: Props) {
   const p = pick.parcel
   if (!p) {
     return (
@@ -46,7 +47,7 @@ export default function PropertyPanel({ pick, year, levies, onYear, onClose }: P
       </div>
     )
   }
-  return <ParcelDetail p={p} building={pick.building} year={year} levies={levies} onYear={onYear} onClose={onClose} />
+  return <ParcelDetail p={p} building={pick.building} year={year} levies={levies} billUrl={billUrlFor(meta, p.pid)} onYear={onYear} onClose={onClose} />
 }
 
 function PanelHead({ title, onClose, children }: { title: string; onClose: () => void; children?: React.ReactNode }) {
@@ -62,8 +63,16 @@ function PanelHead({ title, onClose, children }: { title: string; onClose: () =>
   )
 }
 
-function ParcelDetail({ p, building, year, levies, onYear, onClose }: {
-  p: ParcelProps; building: Record<string, unknown> | null; year: Year; levies: Levies; onYear: (y: Year) => void; onClose: () => void
+/** The county's tax-statement URL builder, picked by the geocode's DOR county code (06 Gallatin, 03 Yellowstone). */
+function billUrlFor(meta: Meta, pid: string): ((ac: string, year: Year) => string) | null {
+  const county = Object.values(meta.counties).find((c) => pid.startsWith(c.dor_code))
+  if (!county?.bill_url) return null
+  return (ac, year) => county.bill_url.replace('{ac}', encodeURIComponent(ac)).replace('{year}', year)
+}
+
+function ParcelDetail({ p, building, year, levies, billUrl, onYear, onClose }: {
+  p: ParcelProps; building: Record<string, unknown> | null; year: Year; levies: Levies
+  billUrl: ((ac: string, year: Year) => string) | null; onYear: (y: Year) => void; onClose: () => void
 }) {
   const bd = useMemo(() => computeBreakdown(p, year, levies), [p, year, levies])
   const f = (base: string) => num(p[yf(base, year)])
@@ -198,12 +207,12 @@ function ParcelDetail({ p, building, year, levies, onYear, onClose }: {
       )}
       {!bd.lines && bd.tax > 0 && <p className="note">No component mill breakdown is available for this levy district in TY{year}; the total above is exact.</p>}
 
-      {nUnits > 0 && <CondoUnits pid={p.pid} n={nUnits} year={year} />}
+      {nUnits > 0 && <CondoUnits pid={p.pid} n={nUnits} year={year} billUrl={billUrl} />}
 
       <section className="pp-links">
-        {ac && (
-          <a href={`https://itax.gallatin.mt.gov/PDF/${year}/RE/${encodeURIComponent(ac)}.pdf`} target="_blank" rel="noreferrer" className="link-btn">
-            County tax statement (PDF) ↗
+        {ac && billUrl && (
+          <a href={billUrl(ac, year)} target="_blank" rel="noreferrer" className="link-btn">
+            County tax statement ↗
           </a>
         )}
         <a href={DOR_SEARCH} target="_blank" rel="noreferrer" className="link-btn">DOR property search ↗</a>
@@ -236,7 +245,7 @@ function BuildingNote({ b, year }: { b: Record<string, unknown>; year: Year }) {
   )
 }
 
-function CondoUnits({ pid, n, year }: { pid: string; n: number; year: Year }) {
+function CondoUnits({ pid, n, year, billUrl }: { pid: string; n: number; year: Year; billUrl: ((ac: string, year: Year) => string) | null }) {
   const [condos, setCondos] = useState<Condos | null>(null)
   const [err, setErr] = useState(false)
   useEffect(() => {
@@ -259,8 +268,8 @@ function CondoUnits({ pid, n, year }: { pid: string; n: number; year: Year }) {
               {units.map((u, i) => (
                 <tr key={i}>
                   <td>
-                    {u[1] ? (
-                      <a href={`https://itax.gallatin.mt.gov/PDF/${year}/RE/${encodeURIComponent(u[1])}.pdf`} target="_blank" rel="noreferrer">{u[0] || u[1]}</a>
+                    {u[1] && billUrl ? (
+                      <a href={billUrl(u[1], year)} target="_blank" rel="noreferrer">{u[0] || u[1]}</a>
                     ) : (u[0] || '—')}
                   </td>
                   <td className="r mono">{fmtUSD(tvOf(u))}</td>

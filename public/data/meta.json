@@ -1,78 +1,149 @@
 {
  "generated": "2026-11-07",
+ "counties": {
+  "gallatin": {
+   "name": "Gallatin County",
+   "dor_code": "06",
+   "district_id": "gallatin-county",
+   "index": "parcels_index_gallatin.json",
+   "bbox": [
+    -111.8054,
+    44.4752,
+    -110.7838,
+    46.1929
+   ],
+   "juris": {
+    "county": "CNTYWID",
+    "cities": [
+     "BOZEMAN",
+     "BELGRAD"
+    ]
+   },
+   "bill_url": "https://itax.gallatin.mt.gov/PDF/{year}/RE/{ac}.pdf",
+   "mills_source": "Gallatin County Treasurer tax comparison statements (retrieved 2026-11-07)",
+   "totals": {
+    "2025": {
+     "properties": 66555,
+     "taxable": 675694357.0,
+     "tax_orion": 304102872.63,
+     "tax_model": 311303825.37
+    },
+    "2026": {
+     "properties": 67054,
+     "taxable": 756981782.0,
+     "tax_orion": 329771271.37,
+     "tax_model": 329867741.76
+    }
+   },
+   "buildings": {
+    "footprints": 74679,
+    "footprints_with_parcel": 70796,
+    "height_src": {
+     "overture": 57227,
+     "class": 17401,
+     "floors": 51
+    },
+    "sum_alloc_tax_b": 206335045.18,
+    "sum_parcel_tax_b_with_fp": 206335046.01,
+    "parcels_with_tax_b": 40310,
+    "parcels_with_tax_b_no_fp": 3127,
+    "tax_b_no_fp": 11782934.09,
+    "tax_b_total": 218117980.1
+   }
+  },
+  "yellowstone": {
+   "name": "Yellowstone County",
+   "dor_code": "03",
+   "district_id": "yellowstone-county",
+   "index": "parcels_index_yellowstone.json",
+   "bbox": [
+    -108.9256,
+    45.4604,
+    -107.4629,
+    46.496
+   ],
+   "juris": {
+    "county": "COWDLVY",
+    "cities": [
+     "BLGS",
+     "LAUREL"
+    ]
+   },
+   "bill_url": "https://www.yellowstonecountymt.gov/treasurer/propertysearch/csatydet.asp?propid={ac}&lyear={year}",
+   "mills_source": "Yellowstone County Treasurer property tax statements (retrieved 2026-11-07)",
+   "totals": {
+    "2025": {
+     "properties": 84573,
+     "taxable": 307286929.0,
+     "tax_orion": 211173583.08,
+     "tax_model": 211016156.39
+    },
+    "2026": {
+     "properties": 85188,
+     "taxable": 340045203.0,
+     "tax_orion": 227796015.84,
+     "tax_model": 227878919.82
+    }
+   },
+   "buildings": {
+    "footprints": 96100,
+    "footprints_with_parcel": 93992,
+    "height_src": {
+     "overture": 66433,
+     "class": 29552,
+     "floors": 115
+    },
+    "sum_alloc_tax_b": 159943285.9,
+    "sum_parcel_tax_b_with_fp": 159943285.33,
+    "parcels_with_tax_b": 66450,
+    "parcels_with_tax_b_no_fp": 7178,
+    "tax_b_no_fp": 12920172.52,
+    "tax_b_total": 172863457.85
+   }
+  }
+ },
  "vintages": {
   "orion": "2026-11-06",
   "cadastral": "2026-11-03",
   "overture": "2026-10-21.0",
-  "mills_2026": "Gallatin County Treasurer TY2026 tax comparison reports (retrieved 2026-11-07)",
-  "mills_2025": "Gallatin County Treasurer (TY2025 billed mills)"
- },
- "totals": {
-  "2025": {
-   "properties": 66555,
-   "taxable": 675694357.0,
-   "tax_orion": 304102872.63,
-   "tax_model": 311303825.37
-  },
-  "2026": {
-   "properties": 67054,
-   "taxable": 756981782.0,
-   "tax_orion": 329771271.37,
-   "tax_model": 329867741.76
-  }
+  "mills_2026": "County Treasurer tax statements (retrieved 2026-11-07)",
+  "mills_2025": "County Treasurer tax statements (TY2025 billed mills)"
  },
  "ramps": {
   "tax": [
-   1100.0,
-   2400.0,
-   3000.0,
-   3900.0,
-   5600.0,
-   8800.0
-  ],
-  "tax_b": [
-   1100.0,
-   1600.0,
+   450.0,
+   1500.0,
    2000.0,
    2600.0,
-   3800.0,
-   6400.0
+   3600.0,
+   5900.0
+  ],
+  "tax_b": [
+   850.0,
+   1400.0,
+   1700.0,
+   2000.0,
+   2800.0,
+   4400.0
   ],
   "tax_l": [
-   330.0,
-   870.0,
+   190.0,
+   310.0,
+   440.0,
+   720.0,
    1200.0,
-   1600.0,
-   2300.0,
-   3600.0
+   2200.0
   ],
   "eff": [
-   3.5,
-   4.2,
-   4.7,
+   4.0,
+   4.9,
    5.6,
-   7.3,
-   9.4
+   5.9,
+   8.5,
+   12.0
   ]
  },
- "buildings": {
-  "footprints": 74679,
-  "footprints_with_parcel": 70796,
-  "height_src": {
-   "overture": 57227,
-   "class": 17401,
-   "floors": 51
-  },
-  "sum_alloc_tax_b": 206335045.18,
-  "sum_parcel_tax_b_with_fp": 206335046.01,
-  "parcels_with_tax_b": 40310,
-  "parcels_with_tax_b_no_fp": 3127,
-  "tax_b_no_fp": 11782934.09,
-  "tax_b_total": 218117980.1
- },
  "non_real": {
-  "retrieved": "2026-11-07",
-  "source": "https://svc.mt.gov/dor/oriondataportal/Public/PropertyMTGov/CertifiedValues.aspx",
   "2026": {
    "CNTYWID": {
     "total": 809147826,
@@ -91,6 +162,24 @@
     "real": 39065125,
     "tif_increment": 1788089,
     "non_real_ratio": 0.0666
+   },
+   "COWDLVY": {
+    "total": 487648752,
+    "real": 386256136,
+    "tif_increment": 16433273,
+    "non_real_ratio": 0.2625
+   },
+   "BLGS": {
+    "total": 264200643,
+    "real": 226728714,
+    "tif_increment": 13612002,
+    "non_real_ratio": 0.1653
+   },
+   "LAUREL": {
+    "total": 11663356,
+    "real": 9503178,
+    "tif_increment": 2128045,
+    "non_real_ratio": 0.2273
    }
   },
   "2025": {
@@ -111,8 +200,26 @@
     "real": 32219290,
     "tif_increment": 1512097,
     "non_real_ratio": 0.0663
+   },
+   "COWDLVY": {
+    "total": 460061409,
+    "real": 365846653,
+    "tif_increment": 15074437,
+    "non_real_ratio": 0.2575
+   },
+   "BLGS": {
+    "total": 245201915,
+    "real": 210422543,
+    "tif_increment": 12352969,
+    "non_real_ratio": 0.1653
+   },
+   "LAUREL": {
+    "total": 10239714,
+    "real": 8297156,
+    "tif_increment": 2184927,
+    "non_real_ratio": 0.2341
    }
   }
  },
- "attribution": "Data: Montana DOR (ORION, 2026-11-06), Montana State Library cadastral (2026-11-03), Overture Maps buildings (2026-10-21), Gallatin County Treasurer mill levies"
+ "attribution": "Data: Montana DOR (ORION, 2026-11-06), Montana State Library cadastral (2026-11-03), Overture Maps buildings (2026-10-21), Gallatin and Yellowstone County Treasurers"
 }

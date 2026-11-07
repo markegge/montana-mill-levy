@@ -12,3 +12,4 @@ pipeline/.venv/
 data/private/
 *.mdf
 *.ldf
+__pycache__/

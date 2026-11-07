@@ -12,8 +12,11 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from county import county_from_argv
+
+C = county_from_argv()
 ROOT = Path(__file__).resolve().parents[1]
-D = ROOT / "data" / "derived"
+D = C.derived
 
 PROP_COLS = ("PropertyID,TaxYear,GeoCode,AssessmentCode,LevyDistrict,PropType,PropCategory,PropSubCategory,"
              "LivUnits,Dwel_Val,Com_Val,TotImpt_Val,TotMarket_Val,Addr_Number,Addr_Street,Addr_City,Addr_Unit").split(",")
@@ -57,12 +60,12 @@ def main():
 
     first = a.ClassCode // 1000
     a["is_land"] = first.isin([1, 2])
-    a["is_bldg"] = first.isin([3, 6])
+    a["is_bldg"] = first.isin([3, 4, 6])  # 4xxx: new-industry phase-in improvements
     unk = a[~(a.is_land | a.is_bldg)]
     assert len(unk) == 0, f"unclassified class codes: {unk.ClassCode.unique()}"
     a["market"] = a.TotalValue
     a["grp"] = np.select(
-        [a.ClassCode.isin(MF_CODES), a.ClassCode.isin(COMM_CODES), first == 1],
+        [a.ClassCode.isin(MF_CODES), a.ClassCode.isin(COMM_CODES) | (first == 4), first == 1],
         ["mf", "comm", "ag"], default="res")
 
     def s(mask, col):
@@ -98,7 +101,7 @@ def main():
     df["geocode17"] = df.GeoCode.str.replace("-", "", regex=False).str.strip()
     df["assessment_code"] = df.AssessmentCode.str.strip().str.lstrip("0")
     df["levy_district"] = df.LevyDistrict.str.strip()
-    df["levy_base"] = df.levy_district.str[:9]
+    df["levy_base"] = df.levy_district  # levy tables are keyed by the full ORION levy-district code
     df["subcat"] = df.PropSubCategory.str.strip()
 
     # category: argmax of taxable by group

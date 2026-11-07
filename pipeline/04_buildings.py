@@ -15,8 +15,11 @@ import numpy as np
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
-D = ROOT / "data" / "derived"
-SRC = ROOT / "data" / "raw" / "overture" / "gallatin_buildings.parquet"
+from county import county_from_argv
+
+C = county_from_argv()
+D = C.derived
+SRC = C.raw / "overture" / f"{C.slug}_buildings.parquet"
 CRS_M = 6514  # NAD83(2011) Montana State Plane, metres
 
 CLASS_H = {"house": 6.0, "detached": 6.0, "residential": 6.0, "apartments": 9.0, "commercial": 5.0, "retail": 5.0,

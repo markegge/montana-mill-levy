@@ -26,7 +26,7 @@ export function computeBreakdown(p: ParcelProps, year: Year, levies: Levies): Br
   const taxLand = num(p[yf('tax_l', year)])
   const taxBldg = num(p[yf('tax_b', year)])
   const levy = (p.levy as string | undefined) ?? ''
-  const lv = levy ? levies.years[year]?.[levy.slice(0, 9)] : undefined
+  const lv = levy ? levies.years[year]?.[levies.districts[levy]?.base ?? levy] : undefined
   if (!lv || !(lv.total > 0)) {
     return { tax, taxLand, taxBldg, levyTotal: null, estimated: false, groups: null, lines: null, residual: 0 }
   }

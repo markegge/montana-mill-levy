@@ -2,13 +2,27 @@ import type { Feature, FeatureCollection, MultiPolygon, Polygon } from 'geojson'
 
 export type Year = '2026' | '2025'
 
+export interface CountyMeta {
+  name: string
+  dor_code: string
+  /** districts.json id of the whole-county boundary */
+  district_id: string
+  index: string
+  bbox: [number, number, number, number]
+  juris: { county: string; cities: string[] }
+  /** Tax statement URL template with {ac} and {year} */
+  bill_url: string
+  mills_source?: string
+}
+
 export interface Meta {
   generated: string
   vintages: Record<string, string>
-  totals: Record<Year, Record<string, number>>
+  /** Keyed by county slug ('gallatin', 'yellowstone'). */
+  counties: Record<string, CountyMeta>
   ramps: { tax: number[]; tax_b: number[]; tax_l: number[]; eff: number[] }
   attribution: string
-  /** DOR certified values by jurisdiction (CNTYWID, BOZEMAN, BELGRAD); non-real property is not mappable. */
+  /** DOR certified values by jurisdiction code (CNTYWID, BOZEMAN, COWDLVY, BLGS, …); non-real property is not mappable. */
   non_real?: Partial<Record<Year, Record<string, { total: number; real: number; tif_increment: number; non_real_ratio: number }>>>
 }
 
@@ -24,11 +38,11 @@ export interface LevyYear {
 
 export interface Levies {
   codes: string[]
-  districts: Record<string, { base: string; name: string; city_rural: 'City' | 'Rural'; tif_ratio?: Partial<Record<Year, number>> }>
+  districts: Record<string, { base: string; name: string; city_rural: 'City' | 'Rural'; county?: string; tif_ratio?: Partial<Record<Year, number>> }>
   years: Record<Year, Record<string, LevyYear>>
 }
 
-export type DistrictProps = { id: string; name: string; type: string; source?: string }
+export type DistrictProps = { id: string; name: string; type: string; county?: string; source?: string }
 export type DistrictFeature = Feature<Polygon | MultiPolygon, DistrictProps>
 export type Districts = FeatureCollection<Polygon | MultiPolygon, DistrictProps>
 
@@ -43,10 +57,12 @@ export interface DistrictYearStats {
   hh: number
   median_res_taxable: number
 }
-export type DistrictStats = Record<string, { name: string; type: string } & Partial<Record<Year, DistrictYearStats>>>
+export type DistrictStats = Record<string, { name: string; type: string; county?: string } & Partial<Record<Year, DistrictYearStats>>>
 
 /** One row per ORION property, unpacked into columns for fast scans. */
 export interface PropIndex {
+  /** County slugs whose rows this index holds, in row order. */
+  counties: string[]
   n: number
   pid: (string | null)[]
   lon: Float64Array // NaN when the property has no polygon
@@ -62,7 +78,7 @@ export type CondoUnit = [addr: string, ac: string, tv26: number, tax26: number, 
 export type Condos = Record<string, CondoUnit[]>
 
 export interface Validation {
-  checks: { id: string; name: string; expected: unknown; actual: unknown; status: string; detail?: string }[]
+  checks: { id: string; county?: string; name: string; expected: unknown; actual: unknown; status: string; detail?: string }[]
 }
 
 /** Property categories used by parcels_index cat26/cat25 and the tile `cat`. */

@@ -14,8 +14,10 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 
+from county import COUNTIES, ORDER, County
+
 ROOT = Path(__file__).resolve().parents[1]
-D = ROOT / "data" / "derived"
+DERIVED = ROOT / "data" / "derived"
 PUB = ROOT / "public" / "data"
 TILES = ROOT / "public" / "tiles"
 PUB.mkdir(parents=True, exist_ok=True)
@@ -24,10 +26,8 @@ TILES.mkdir(parents=True, exist_ok=True)
 RES_CATS = [1, 2, 3]
 
 
-def build_index() -> tuple[pd.DataFrame, dict]:
+def build_index(D: Path, code_idx: dict[str, int]) -> pd.DataFrame:
     pts = pd.read_parquet(D / "property_points.parquet")
-    lev = json.loads((D / "levies.json").read_text())
-    code_idx = {c: i for i, c in enumerate(lev["codes"])}
     p26 = pts[pts.tax_year == 2026].set_index("property_id")
     p25 = pts[pts.tax_year == 2025].set_index("property_id")
     ids = p26.index.union(p25.index)
@@ -44,10 +44,10 @@ def build_index() -> tuple[pd.DataFrame, dict]:
     df["cat26"] = base.cat.fillna(0).astype(int); df["cat25"] = fb.cat.fillna(0).astype(int)
     df["hh"] = base.hh.fillna(fb.hh).fillna(0).astype(int)
     df = df[(df.tv26 > 0) | (df.tv25 > 0) | (df.hh > 0)]
-    return df.reset_index(names="property_id"), lev
+    return df.reset_index(names="property_id")
 
 
-def write_index(df: pd.DataFrame):
+def write_index(df: pd.DataFrame, slug: str):
     cols = ["pid", "lon", "lat", "levy", "tv26", "tax26", "tv25", "tax25", "cat26", "cat25", "hh"]
     rows = []
     for r in df.itertuples(index=False):
@@ -57,30 +57,41 @@ def write_index(df: pd.DataFrame):
                      None if pd.isna(r.levy) else int(r.levy),
                      int(round(r.tv26)), round(float(r.tax26), 2), int(round(r.tv25)), round(float(r.tax25), 2),
                      int(r.cat26), int(r.cat25), int(r.hh)])
-    (PUB / "parcels_index.json").write_text(json.dumps({"cols": cols, "rows": rows}, separators=(",", ":")))
+    (PUB / f"parcels_index_{slug}.json").write_text(json.dumps({"cols": cols, "rows": rows}, separators=(",", ":")))
 
 
-def tif_ratios(df: pd.DataFrame, lev: dict) -> dict[str, dict[str, float]]:
-    """Share of taxable value in each TIF levy district that is TIF increment, from DOR certified values.
+# TIF levy districts per certified jurisdiction. Mills levied on TIF increment go to the TIF fund, not to the
+# levying district. "*REST" = county-wide increment minus the listed city increments (e.g. Lockwood TEDD).
+TIF_JURIS = {
+    "gallatin": [("BOZEMAN", r"^06-0350T"), ("BELGRAD", r"^06-0368T")],
+    "yellowstone": [("BLGS", r"^03-(0965T|09653A|0981T)"), ("LAUREL", r"^03-0970TI"), ("*REST", r"^03-1241TF")],
+}
+COUNTY_JURIS = {"gallatin": "CNTYWID", "yellowstone": "COWDLVY"}
+CITY_JURIS = {"gallatin": ["BOZEMAN", "BELGRAD"], "yellowstone": ["BLGS", "LAUREL"]}
 
-    Countywide TIF increment (TY2026 $25.48M) = Bozeman ($23.70M, levy codes 06-0350T1..T6) + Belgrade
-    ($1.79M, 06-0368T1). Mills levied on increment go to the TIF fund, not to the levying district.
-    """
-    cv = json.loads((ROOT / "data" / "reference" / "certified_values.json").read_text())["jurisdictions"]
+
+def tif_ratios(C: County, df: pd.DataFrame, codes: list[str]) -> dict[str, dict[str, float]]:
+    import re
+    cv = json.loads(C.certified_values.read_text())["jurisdictions"]
     out: dict[str, dict[str, float]] = {}
     for y, tvcol in (("2026", "tv26"), ("2025", "tv25")):
-        for juris, prefix in (("BOZEMAN", "06-0350T"), ("BELGRAD", "06-0368T")):
-            inc = cv[y][juris]["values"].get("TIF Increment - Taxable Value") or 0
-            codes = [c for c in lev["codes"] if c.startswith(prefix)]
-            tv = df[df.levy_code.isin(codes)][tvcol].sum()
-            r = min(1.0, inc / tv) if tv else 0.0
-            for c in codes:
+        listed = 0.0
+        for juris, pat in TIF_JURIS[C.slug]:
+            if juris == "*REST":
+                inc = (cv[y][COUNTY_JURIS[C.slug]]["values"].get("TIF Increment - Taxable Value") or 0) - listed
+            else:
+                inc = cv[y][juris]["values"].get("TIF Increment - Taxable Value") or 0
+                listed += inc
+            cs = [c for c in codes if re.match(pat, c)]
+            tv = df[df.levy_code.isin(cs)][tvcol].sum()
+            r = max(0.0, min(1.0, inc / tv)) if tv else 0.0
+            for c in cs:
                 out.setdefault(c, {})[y] = round(float(r), 4)
     return out
 
 
-def district_stats(df: pd.DataFrame, tif: dict) -> dict:
-    dist = gpd.read_file(D / "districts.geojson")
+def district_stats(C: County, df: pd.DataFrame, tif: dict) -> dict:
+    dist = gpd.read_file(C.derived / "districts.geojson")
     pts = df[df.lon.notna()]
     g = gpd.GeoDataFrame(pts, geometry=gpd.points_from_xy(pts.lon, pts.lat), crs=4326)
     j = gpd.sjoin(g[["property_id", "geometry"]], dist[["id", "geometry"]], predicate="within", how="inner")
@@ -88,8 +99,8 @@ def district_stats(df: pd.DataFrame, tif: dict) -> dict:
     out = {}
     for _, d in dist.iterrows():
         did = d["id"]
-        sel = df if did == "gallatin-county" else df[df.property_id.isin(members.get(did, set()))]
-        rec = {"name": d["name"], "type": d["type"]}
+        sel = df if did == f"{C.slug}-county" else df[df.property_id.isin(members.get(did, set()))]
+        rec = {"name": d["name"], "type": d["type"], "county": C.slug}
         for y, tv, cat, tax in (("2026", "tv26", "cat26", "tax26"), ("2025", "tv25", "cat25", "tax25")):
             s = sel[sel[tv] > 0]
             res = s[s[cat].isin(RES_CATS)]
@@ -117,14 +128,14 @@ def ramp(vals: pd.Series, k: int = 7) -> list[float]:
     return out
 
 
-def non_real() -> dict:
+def non_real(C: County) -> dict:
     """Certified taxable value that is not real property (personal property, centrally assessed utilities and
     railroads, net/gross proceeds, manufactured homes on others' land) - not mappable, shown as context."""
-    cv = json.loads((ROOT / "data" / "reference" / "certified_values.json").read_text())
-    out = {"retrieved": cv.get("retrieved"), "source": cv.get("source")}
+    cv = json.loads(C.certified_values.read_text())
+    out = {}
     for y in ("2026", "2025"):
         out[y] = {}
-        for k in ("CNTYWID", "BOZEMAN", "BELGRAD"):
+        for k in [COUNTY_JURIS[C.slug]] + CITY_JURIS[C.slug]:
             v = cv["jurisdictions"][y][k]["values"]
             total = v["Total - Taxable Value"]; real = v["Real Property - Taxable Value"]
             out[y][k] = {"total": total, "real": real, "tif_increment": v.get("TIF Increment - Taxable Value"),
@@ -132,60 +143,91 @@ def non_real() -> dict:
     return out
 
 
+BILL_URL = {"gallatin": "https://itax.gallatin.mt.gov/PDF/{year}/RE/{ac}.pdf",
+            "yellowstone": "https://www.yellowstonecountymt.gov/treasurer/propertysearch/csatydet.asp?propid={ac}&lyear={year}"}
+VINTAGE = {"gallatin": {"mills": "Gallatin County Treasurer tax comparison statements (retrieved 2026-11-07)"},
+           "yellowstone": {"mills": "Yellowstone County Treasurer property tax statements (retrieved 2026-11-07)"}}
+
+
 def main():
-    df, lev = build_index()
-    write_index(df)
-    # levies.json for the browser: slimmer (drop diagnostics)
-    slim = {"codes": lev["codes"],
-            "districts": {c: {"base": m["base"], "name": m["name"], "city_rural": m["city_rural"]}
-                          for c, m in lev["districts"].items()},
-            "years": {y: {b: {"total": v["total"], "estimated": v["estimated"], "groups": v["groups"],
-                              "lines": v["lines"]} for b, v in yy.items()} for y, yy in lev["years"].items()},
-            "method": lev["method"]}
-    for c in lev["codes"]:
-        slim["districts"].setdefault(c, {"base": c[:9], "name": c, "city_rural": "Rural"})
-    tif = tif_ratios(df, lev)
-    for c, r in tif.items():
-        slim["districts"][c]["tif_ratio"] = r
+    counties = [COUNTIES[s] for s in ORDER if (COUNTIES[s].derived / "property_points.parquet").exists()]
+    levs = {C.slug: json.loads((C.derived / "levies.json").read_text()) for C in counties}
+    codes = [c for C in counties for c in levs[C.slug]["codes"]]
+    code_idx = {c: i for i, c in enumerate(codes)}
+    slim = {"codes": codes, "districts": {}, "years": {"2026": {}, "2025": {}},
+            "method": "Line-item mills from each county Treasurer's statements for one representative property per levy district."}
+    feats, stats, condos, non_real_all = [], {}, {}, {}
+    counties_meta, all_parcels = {}, []
+    for C in counties:
+        lev = levs[C.slug]
+        df = build_index(C.derived, code_idx)
+        write_index(df, C.slug)
+        for c, m in lev["districts"].items():
+            slim["districts"][c] = {"base": m["base"], "name": m["name"], "city_rural": m["city_rural"], "county": C.slug}
+        for c in lev["codes"]:
+            slim["districts"].setdefault(c, {"base": c, "name": c, "city_rural": "Rural", "county": C.slug})
+        for y, yy in lev["years"].items():
+            for b, v in yy.items():
+                slim["years"][y][b] = {"total": v["total"], "estimated": v["estimated"], "groups": v["groups"], "lines": v["lines"]}
+        tif = tif_ratios(C, df, lev["codes"])
+        for c, r in tif.items():
+            slim["districts"][c]["tif_ratio"] = r
+        dist = json.loads((C.derived / "districts.geojson").read_text())
+        for f in dist["features"]:
+            f["properties"] = {k: f["properties"].get(k) for k in ("id", "name", "type", "source", "updated", "county")}
+            f["properties"]["county"] = C.slug
+        feats += dist["features"]
+        st = district_stats(C, df, tif)
+        (C.derived / "district_stats.json").write_text(json.dumps(st, indent=1))
+        stats.update(st)
+        condos.update(json.loads((C.derived / "condos.json").read_text()))
+        nr = non_real(C)
+        for y in nr:
+            non_real_all.setdefault(y, {}).update(nr[y])
+        summ = json.loads((C.derived / "orion_summary.json").read_text())
+        pc = gpd.read_parquet(C.derived / "parcels.parquet")
+        b = pc.to_crs(4326).total_bounds
+        all_parcels.append(pc[["tax", "tax_l", "tax_b", "eff"]])
+        counties_meta[C.slug] = {
+            "name": f"{C.name} County", "dor_code": C.dor_code, "district_id": f"{C.slug}-county",
+            "index": f"parcels_index_{C.slug}.json", "bbox": [round(float(x), 4) for x in b],
+            "juris": {"county": COUNTY_JURIS[C.slug], "cities": CITY_JURIS[C.slug]},
+            "bill_url": BILL_URL[C.slug], "mills_source": VINTAGE[C.slug]["mills"],
+            "totals": {y: {"properties": summ[y]["properties"], "taxable": summ[y]["taxable_total"],
+                           "tax_orion": summ[y]["tax_total"],
+                           "tax_model": round(float(df["tax26" if y == "2026" else "tax25"].sum()), 2)} for y in summ},
+            "buildings": json.loads((C.derived / "buildings_stats.json").read_text()),
+        }
     (PUB / "levies.json").write_text(json.dumps(slim, separators=(",", ":")))
-
-    dist = json.loads((D / "districts.geojson").read_text())
-    for f in dist["features"]:
-        f["properties"] = {k: f["properties"].get(k) for k in ("id", "name", "type", "source", "updated")}
-    (PUB / "districts.json").write_text(json.dumps(dist, separators=(",", ":")))
-
-    stats = district_stats(df, tif)
-    (D / "district_stats.json").write_text(json.dumps(stats, indent=1))
+    (PUB / "districts.json").write_text(json.dumps({"type": "FeatureCollection", "features": feats}, separators=(",", ":")))
     (PUB / "district_stats.json").write_text(json.dumps(stats, separators=(",", ":")))
-    shutil.copy(D / "condos.json", PUB / "condos.json")
-
-    parcels = pd.read_parquet(D / "parcels.parquet", columns=["tax", "tax_l", "tax_b", "eff"])
-    bstats = json.loads((D / "buildings_stats.json").read_text())
-    summ = json.loads((D / "orion_summary.json").read_text())
+    (PUB / "condos.json").write_text(json.dumps(condos, separators=(",", ":")))
+    old = PUB / "parcels_index.json"
+    if old.exists():
+        old.unlink()
+    parcels = pd.concat(all_parcels)
     meta = {
         "generated": date.today().isoformat(),
+        "counties": counties_meta,
         "vintages": {"orion": "2026-11-06", "cadastral": "2026-11-03", "overture": "2026-10-21.0",
-                     "mills_2026": "Gallatin County Treasurer TY2026 tax comparison reports (retrieved 2026-11-07)",
-                     "mills_2025": "Gallatin County Treasurer (TY2025 billed mills)"},
-        "totals": {y: {"properties": summ[y]["properties"], "taxable": summ[y]["taxable_total"],
-                       "tax_orion": summ[y]["tax_total"],
-                       "tax_model": round(float(df["tax26" if y == "2026" else "tax25"].sum()), 2)} for y in summ},
+                     "mills_2026": "County Treasurer tax statements (retrieved 2026-11-07)",
+                     "mills_2025": "County Treasurer tax statements (TY2025 billed mills)"},
         "ramps": {"tax": ramp(parcels.tax), "tax_b": ramp(parcels.tax_b), "tax_l": ramp(parcels.tax_l),
                   "eff": ramp(parcels.eff)},
-        "buildings": bstats,
-        "non_real": non_real(),
+        "non_real": non_real_all,
         "attribution": "Data: Montana DOR (ORION, 2026-11-06), Montana State Library cadastral (2026-11-03), "
-                       "Overture Maps buildings (2026-10-21), Gallatin County Treasurer mill levies",
+                       "Overture Maps buildings (2026-10-21), Gallatin and Yellowstone County Treasurers",
     }
     (PUB / "meta.json").write_text(json.dumps(meta, indent=1))
     for f in ("parcels.pmtiles", "buildings.pmtiles"):
-        shutil.copy(D / f, TILES / f)
+        shutil.copy(DERIVED / "all" / f, TILES / f)
     for f in sorted(PUB.iterdir()):
-        print(f"{f.name:24s} {f.stat().st_size / 1e6:6.2f} MB")
+        print(f"{f.name:28s} {f.stat().st_size / 1e6:6.2f} MB")
     print("ramps", meta["ramps"])
-    for k in ("utd-gallatin-valley-urban-transportation-district", "gallatin-county", "city-bozeman", "city-belgrade"):
-        s = stats.get(k, {}).get("2026", {})
-        print(k, s.get("taxable"), s.get("mill_value"), s.get("n_props"))
+    for k in ("utd-gallatin-valley-urban-transportation-district", "gallatin-county", "city-bozeman",
+              "yellowstone-county", "ys-city-billings", "ys-city-laurel"):
+        s_ = stats.get(k, {}).get("2026", {})
+        print(k, s_.get("taxable"), s_.get("mill_value"), s_.get("n_props"))
 
 
 if __name__ == "__main__":

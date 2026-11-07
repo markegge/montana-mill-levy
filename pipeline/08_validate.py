@@ -5,19 +5,75 @@ import json
 from datetime import date
 from pathlib import Path
 
+import re
+
 import numpy as np
 import pandas as pd
+import requests
+
+from county import COUNTIES, ORDER, County
 
 ROOT = Path(__file__).resolve().parents[1]
-D = ROOT / "data" / "derived"
 PUB = ROOT / "public" / "data"
+UA = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) mill-levy research"}
 
 checks: list[dict] = []
+CUR = {"county": ""}
 
 
 def add(cid, name, expected, actual, ok, detail=""):
-    checks.append({"id": cid, "name": name, "expected": expected, "actual": actual,
+    checks.append({"id": cid, "county": CUR["county"], "name": name, "expected": expected, "actual": actual,
                    "status": "PASS" if ok else "FAIL", "detail": detail})
+
+
+COUNTY_JURIS = {"gallatin": "CNTYWID", "yellowstone": "COWDLVY"}
+# (check id, certified jurisdiction, district id, City-levy line-name prefix used to find the city's levy codes)
+CITIES = {"gallatin": [("V3", "BOZEMAN", "city-bozeman", ("bzn", "bozeman")), ("V4", "BELGRAD", "city-belgrade", ("belgrade",))],
+          "yellowstone": [("V3", "BLGS", "ys-city-billings", ("billings-",)), ("V4", "LAUREL", "ys-city-laurel", ("laurel",))]}
+
+
+def ys_taxcode(ac: str) -> str:
+    """ORION assessment code (leading zeros stripped) -> Yellowstone Treasurer tax code (drop a trailing 0)."""
+    return ac[:-1] if ac.endswith("0") else ac
+
+
+def ys_bill(C: County, ac: str, year: int) -> float | None:
+    """General tax (the levy-district line) on the Yellowstone Treasurer's statement detail page."""
+    tc = ys_taxcode(ac)
+    cache = C.raw / "bills" / f"{tc}_{year}.html"
+    cache.parent.mkdir(parents=True, exist_ok=True)
+    if not cache.exists():
+        r = requests.get("https://www.yellowstonecountymt.gov/treasurer/propertysearch/csatydet.asp",
+                         params={"propid": tc, "lyear": year}, headers=UA, timeout=60)
+        if r.status_code != 200:
+            return None
+        cache.write_text(r.text)
+    from bs4 import BeautifulSoup
+    b = BeautifulSoup(cache.read_text(errors="ignore"), "html.parser")
+    # General tax = the levy-district line, plus, for TIF parcels, the TIF-increment line (same district name)
+    # and the TIF university / vo-tech lines (codes TIDU, TIVT). Special assessments and the TY2025 mid-year
+    # "ADD'L" school supplements are not general mills in ORION and are excluded.
+    rows = []
+    for tr in b.find_all("tr"):
+        cells = [td.get_text(" ", strip=True) for td in tr.find_all("td", recursive=False)]
+        if len(cells) >= 3:
+            rows.append(cells)
+    district = None; total = 0.0
+    for cells in rows:
+        if any("(Levy District)" in c for c in cells):
+            district = next(c for c in cells if "(Levy District)" in c).replace("(Levy District)", "").strip()
+            total += float(cells[-1].replace(",", ""))
+    if district is None:
+        return None
+    for cells in rows:
+        code, desc = cells[0].strip(), cells[1].strip()
+        if "(Levy District)" in desc:
+            continue
+        d_up = desc.upper()
+        in_tif = any(k in district.upper() for k in ("URBAN", "TEDD", "TAX I"))
+        if code.startswith("TID") or d_up == district.upper() or (in_tif and any(k in d_up for k in ("URBAN", "TEDD", "TAX I"))):
+            total += float(cells[-1].replace(",", ""))
+    return round(total, 2)
 
 
 def pct(a, b):
@@ -28,9 +84,11 @@ def money(x):
     return f"${x:,.2f}"
 
 
-def main():
+def validate(C: County):
+    CUR["county"] = C.slug
+    D = C.derived
     props = pd.read_parquet(D / "property_points.parquet")
-    cv = json.loads((ROOT / "data" / "reference" / "certified_values.json").read_text())["jurisdictions"]
+    cv = json.loads(C.certified_values.read_text())["jurisdictions"]
     lev = json.loads((D / "levies.json").read_text())
     stats = json.loads((D / "district_stats.json").read_text())
     join = json.loads((D / "join_report.json").read_text())
@@ -39,18 +97,29 @@ def main():
 
     # V1/V2 county
     for cid, y, o, tol in (("V1", "2026", p26, 1.0), ("V2", "2025", p25, 2.5)):
-        cert = cv[y]["CNTYWID"]["values"]["Real Property - Taxable Value"]
+        cert = cv[y][COUNTY_JURIS[C.slug]]["values"]["Real Property - Taxable Value"]
         got = float(o.taxable_total.sum()); d = pct(got, cert)
+        note = ""
+        if C.slug == "yellowstone":
+            mkt = float(o.market_total.sum())
+            cm = cv[y][COUNTY_JURIS[C.slug]]["values"].get("Real Property - Market Value") or 0
+            note = (f"Unresolved. ORION market value is ${mkt / 1e9:.2f}B vs certified ${cm / 1e9:.2f}B, so the gap is in "
+                    "taxable value, not in missing parcels. Billings reconciles within 0.2% (V3), so the shortfall sits "
+                    "outside the cities. A likely cause is industrial property (the three refineries) that DOR certifies at "
+                    "values or class rates not carried in the county ORION extract. All mapped taxes still come from "
+                    "ORION/Treasurer values; the county-wide value of a mill in the calculator is understated by about "
+                    f"{-d:.0f}%.")
         add(cid, f"County RP taxable TY{y}: ORION vs DOR certified (real property)", f"${cert:,.0f} ±{tol}%",
-            f"${got:,.0f} ({d:+.2f}%)", abs(d) <= tol)
+            f"${got:,.0f} ({d:+.2f}%)", abs(d) <= tol, note)
 
     # V3/V4 cities (polygon membership, plus levy-code membership as a diagnostic)
-    for cid, juris, did, prefix in (("V3", "BOZEMAN", "city-bozeman", ("06-0350", "06-1350")),
-                                    ("V4", "BELGRAD", "city-belgrade", ("06-0368",))):
+    for cid, juris, did, line_prefix in CITIES[C.slug]:
+        city_codes = {b for b, v in lev["years"]["2026"].items()
+                      if any(l["group"] == "City" and l["name"].lower().startswith(line_prefix) for l in v["lines"])}
         for y, o in (("2026", p26), ("2025", p25)):
             cert = cv[y][juris]["values"]["Real Property - Taxable Value"]
             got = stats[did][y]["taxable"]; d = pct(got, cert)
-            bycode = float(o[o.levy_district.str.startswith(prefix)].taxable_total.sum()); d2 = pct(bycode, cert)
+            bycode = float(o[o.levy_district.isin(city_codes)].taxable_total.sum()); d2 = pct(bycode, cert)
             add(f"{cid}-{y}", f"{stats[did]['name']} RP taxable TY{y}: parcels inside MSL city polygon vs certified",
                 f"${cert:,.0f} ±3%", f"${got:,.0f} ({d:+.2f}%)", abs(d) <= 3.0,
                 f"By city levy-district code instead of polygon: ${bycode:,.0f} ({d2:+.2f}%).")
@@ -69,8 +138,9 @@ def main():
         parsed = {b: v for b, v in yy.items() if not v["estimated"]}
         est = [b for b, v in yy.items() if v["estimated"]]
         sum_bad = [b for b, v in parsed.items() if abs(v["lines_sum"] - v["total"]) > 0.15]
+        tol = 0.0005 if (C.slug == "gallatin" or y == "2026") else 0.011  # YS TY2025 total = sum of 3-dp line mills
         mode_bad = [(b, v["orion_mode"], v["total"]) for b, v in parsed.items()
-                    if v["orion_mode"] is None or abs(v["orion_mode"] - v["total"]) > 0.0005]
+                    if v["orion_mode"] is None or abs(v["orion_mode"] - v["total"]) > tol]
         n_codes = len(lev["codes"])
         # property-level impact of the differences
         o = p26 if y == "2026" else p25
@@ -89,19 +159,33 @@ def main():
              f"(ORION {money(diff.tax_total_orion.sum())} -> billed {money(diff.tax_total.sum())}).") if mode_bad else "")
 
     # V7 bills
-    bills = [("RGF65523", 2026, 1554.06, 405.76, 3830), ("RGF65523", 2025, 1716.09, 431.72, 3975),
-             ("RFG16430", 2026, 7756.48, 415.92, None), ("RFG16430", 2025, 8897.40, 444.27, None),
-             ("RGH9979", 2026, None, 531.99, None)]
+    if C.slug == "gallatin":
+        bills = [("RGF65523", 2026, 1554.06, 405.76, 3830), ("RGF65523", 2025, 1716.09, 431.72, 3975),
+                 ("RFG16430", 2026, 7756.48, 415.92, None), ("RFG16430", 2025, 8897.40, 444.27, None),
+                 ("RGH9979", 2026, None, 531.99, None)]
+    else:
+        # A Billings home (tax code A23320), the largest homestead in Laurel city and in Shepherd (rural); the
+        # expected amounts are read from the Treasurer's statement detail pages at validation time.
+        picks = ["A233200"]
+        for code in ("03-0970-7", "03-0985-37"):
+            o = p26[(p26.levy_district == code) & (p26.cat == 1) & p26.property_id.isin(p25.property_id)
+                    & ~p26.subcat.isin(["MH", "C_MSTR"])].sort_values("taxable_total", ascending=False)
+            picks.append(o.assessment_code.iloc[0])
+        bills = []
+        for ac in picks:
+            for y in (2026, 2025):
+                bills.append((ac, y, ys_bill(C, ac, y), None, None))
     for ac, y, tax, mills, tv in bills:
         r = props[(props.assessment_code == ac) & (props.tax_year == y)]
-        if r.empty:
-            add(f"V7-{ac}-{y}", f"Bill {ac} TY{y}", "found", "missing", False); continue
+        label = ys_taxcode(ac) if C.slug == "yellowstone" else ac
+        if r.empty or (tax is None and mills is None):
+            add(f"V7-{label}-{y}", f"Bill {label} TY{y}", "found", "missing", False); continue
         r = r.iloc[0]
-        ok = abs(r.mills - mills) < 0.0005 and (tax is None or abs(r.tax_total - tax) < 0.005) \
+        ok = (mills is None or abs(r.mills - mills) < 0.0005) and (tax is None or abs(r.tax_total - tax) < 0.005) \
             and (tv is None or r.taxable_total == tv)
         exp = f"tax {money(tax)} " if tax else ""
-        add(f"V7-{ac}-{y}", f"Real bill {ac} TY{y} ({r.address})",
-            f"{exp}mills {mills:.3f}" + (f" taxable ${tv:,}" if tv else ""),
+        add(f"V7-{label}-{y}", f"Real bill {label} TY{y} ({r.address})",
+            f"{exp}" + (f"mills {mills:.3f}" if mills else "") + (f" taxable ${tv:,}" if tv else ""),
             f"tax {money(r.tax_total)} mills {r.mills:.3f} taxable ${r.taxable_total:,.0f} "
             f"(ORION TaxAmount {money(r.tax_total_orion)}, TotalMills {r.mills_orion:.3f})", ok)
 
@@ -110,7 +194,7 @@ def main():
     samp = parcels[parcels.tax > 0].sample(200, random_state=7)
     worst = 0.0; worst_r = 0.0; n_ok = 0
     for r in samp.itertuples():
-        v = lev["years"]["2026"].get(r.levy[:9])
+        v = lev["years"]["2026"].get(r.levy)
         if not v or not v["lines"]:
             continue
         tot = sum(l["mills"] for l in v["lines"])
@@ -143,8 +227,8 @@ def main():
         f"Median abs error ${err.median():.2f}; 99th pct ${err.quantile(.99):.2f}.")
 
     # V10 GVUTD
-    g = stats["utd-gallatin-valley-urban-transportation-district"]
-    for y in ("2026", "2025"):
+    g = stats.get("utd-gallatin-valley-urban-transportation-district")
+    for y in (("2026", "2025") if g else ()):
         mv = g[y]["mill_value"]
         add(f"V10-{y}", f"GVUTD value of 1 mill TY{y} (mapped real property)", "$250k–$400k",
             f"${mv:,.2f} (taxable ${g[y]['taxable']:,}; net of est. TIF increment ${g[y]['mill_value_net_tif']:,.2f})",
@@ -165,19 +249,27 @@ def main():
 
     # V12 independent spot check: 40 random properties (not the per-district samples) vs their Treasurer bill
     import importlib.util
+    import sys
+    argv = sys.argv; sys.argv = [argv[0], "--county", "gallatin"]  # 02_levies reads --county at import
     spec = importlib.util.spec_from_file_location("lv", Path(__file__).with_name("02_levies.py"))
     lv = importlib.util.module_from_spec(spec); spec.loader.exec_module(lv)
+    sys.argv = argv
     used = set(pd.read_csv(D / "levy_samples.csv").ac)
     pool = p26[(p26.subcat != "MH") & (p26.taxable_total > 0) & (p26.n_dwellings >= 0) & ~p26.assessment_code.isin(used)
                & (p26.assessment_code.str.len() > 0) & ~p26.join_how.isin(["condo_master", "unit_x000"])]
     samp = pool.sample(40, random_state=11)
     res = {"2026": [0, 0, []], "2025": [0, 0, []]}
+    near = {"2026": 0, "2025": 0}
     for r in samp.itertuples():
-        pdf = lv.fetch_pdf(r.assessment_code)
-        if not pdf:
-            continue
-        pr = lv.parse_pdf(pdf)
-        for y, gen in (("2026", pr["gen26"]), ("2025", pr["gen25"])):
+        if C.slug == "gallatin":
+            pdf = lv.fetch_pdf(r.assessment_code)
+            if not pdf:
+                continue
+            pr = lv.parse_pdf(pdf)
+            gens = (("2026", pr["gen26"]), ("2025", pr["gen25"]))
+        else:
+            gens = (("2026", ys_bill(C, r.assessment_code, 2026)), ("2025", ys_bill(C, r.assessment_code, 2025)))
+        for y, gen in gens:
             row = props[(props.property_id == r.property_id) & (props.tax_year == int(y))]
             if gen is None or row.empty:
                 continue
@@ -186,30 +278,43 @@ def main():
             if abs(ours - gen) < 0.015:
                 res[y][1] += 1
             else:
+                near[y] += abs(ours - gen) <= 3.0
                 res[y][2].append(f"{r.assessment_code}: bill {money(gen)} vs app {money(ours)} (ORION {money(orion)})")
     for y, (n, ok, bad) in res.items():
         add(f"V12-{y}", f"Independent spot check TY{y}: app tax vs Treasurer bill, 40 random properties", "to the cent",
-            f"{ok}/{n} exact", n > 0 and ok / n >= 0.95,
-            ("Misses: " + "; ".join(bad[:10])) if bad else "All exact.")
+            f"{ok}/{n} exact" + (f", {ok + near[y]}/{n} within $3" if near[y] else ""), n > 0 and ok / n >= 0.95,
+            ("Misses: " + "; ".join(bad[:10]) + (". Differences of a few cents on TIF parcels come from the Treasurer "
+             "splitting the bill into base and increment lines and rounding each." if C.slug == "yellowstone" else ""))
+            if bad else "All exact.")
 
+
+
+def main():
+    counties = [COUNTIES[c] for c in ORDER if (COUNTIES[c].derived / "property_points.parquet").exists()]
+    for C in counties:
+        validate(C)
     out = {"generated": date.today().isoformat(), "checks": checks}
     # The public page shows county-wide checks only; district-specific checks stay in VALIDATION.md.
     pub = {"generated": out["generated"], "checks": [c for c in checks if not c["id"].startswith("V10")]}
     (PUB / "validation.json").write_text(json.dumps(pub, indent=1))
-    (D / "validation.json").write_text(json.dumps(out, indent=1))
-    n_fail = sum(c["status"] == "FAIL" for c in checks)
-    md = [f"# Validation — Gallatin County MVP", "",
-          f"Generated {out['generated']} by `pipeline/08_validate.py`. {len(checks) - n_fail}/{len(checks)} checks pass.", "",
-          "| # | Check | Expected | Actual | Status |", "|---|---|---|---|---|"]
-    for c in checks:
-        md.append(f"| {c['id']} | {c['name']} | {c['expected']} | {c['actual']} | **{c['status']}** |")
-    md += ["", "## Details", ""]
-    for c in checks:
-        if c["detail"]:
-            md.append(f"- **{c['id']}** ({c['status']}): {c['detail']}")
+    (ROOT / "data" / "derived" / "validation.json").write_text(json.dumps(out, indent=1))
+    md = ["# Validation", "",
+          f"Generated {out['generated']} by `pipeline/08_validate.py`. Gates per PLAN.md §9, run per county.", ""]
+    for C in counties:
+        cs = [c for c in checks if c["county"] == C.slug]
+        n_fail = sum(c["status"] == "FAIL" for c in cs)
+        md += [f"## {C.name} County", "", f"{len(cs) - n_fail}/{len(cs)} checks pass.", "",
+               "| # | Check | Expected | Actual | Status |", "|---|---|---|---|---|"]
+        for c in cs:
+            md.append(f"| {c['id']} | {c['name']} | {c['expected']} | {c['actual']} | **{c['status']}** |")
+        md += ["", f"### {C.name} details", ""]
+        for c in cs:
+            if c["detail"]:
+                md.append(f"- **{c['id']}** ({c['status']}): {c['detail']}")
+        md.append("")
     (ROOT / "VALIDATION.md").write_text("\n".join(md) + "\n")
     for c in checks:
-        print(f"{c['status']}  {c['id']:14s} {c['actual']}")
+        print(f"{c['status']}  {c['county'][:4]} {c['id']:18s} {c['actual']}")
 
 
 if __name__ == "__main__":
