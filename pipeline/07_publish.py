@@ -149,6 +149,78 @@ VINTAGE = {"gallatin": {"mills": "Gallatin County Treasurer tax comparison state
            "yellowstone": {"mills": "Yellowstone County Treasurer property tax statements (retrieved 2026-11-07)"}}
 
 
+CITY_FIX = {"Gallatin Gtwy": "Gallatin Gateway", "Gallatin Gate Way": "Gallatin Gateway", "Gallatin Gwy": "Gallatin Gateway",
+            "Gateway": "Gallatin Gateway", "W Yellowstone": "West Yellowstone", "West Yellowston": "West Yellowstone",
+            "Lauerl": "Laurel", "Bilings": "Billings", "Ballintine": "Ballantine", "Shepered": "Shepherd",
+            "Shephard": "Shepherd", "Pom Pey Pillar": "Pompeys Pillar", "Pompey Pillar": "Pompeys Pillar",
+            "Pompey'S Pillar": "Pompeys Pillar"}
+
+
+def address_index(C: County) -> int:
+    """public/data/addr_<county>.json: property (situs) addresses -> parcel id + representative point.
+
+    Sources: the cadastral AddressLine1/CityStateZip of each parcel, plus every ORION property address on the parcel
+    (condo units carry their unit number). Owner names and mailing addresses are never included.
+    """
+    import re
+    pc = pd.read_parquet(C.derived / "parcels.parquet", columns=["pid", "addr", "rep_lon", "rep_lat"])
+    pts = pd.read_parquet(C.derived / "property_points.parquet", columns=["tax_year", "pid", "address"])
+    pts = pts[pts.pid.notna()].sort_values("tax_year", ascending=False)
+    loc = pc.set_index("pid")[["rep_lon", "rep_lat"]]
+    orion_city = {}
+    rows, seen = [], set()
+
+    def split(a: str):
+        a = (a or "").strip()
+        city = ""
+        if "," in a:
+            head, tail = [x.strip() for x in a.rsplit(",", 1)]
+            if tail and not re.search(r"\d", tail):
+                a, city = head, tail
+        unit = ""
+        m = re.search(r"\s#\s*(\S+)$", a)
+        if m:
+            unit, a = m.group(1), a[:m.start()].strip()
+        city = CITY_FIX.get(city.title(), city.title())
+        return a.upper(), city, unit.upper()
+
+    for r in pts.itertuples():
+        a, city, _ = split(r.address)
+        if city:
+            orion_city.setdefault(r.pid, city)
+
+    def add(pid, a, city, unit):
+        if not a or not re.match(r"^\d", a) or pid not in loc.index:
+            return
+        key = (a, unit, pid)
+        if key in seen:
+            return
+        seen.add(key)
+        lon, lat = loc.loc[pid]
+        rows.append([a, city or orion_city.get(pid, ""), unit, pid, round(float(lon), 5), round(float(lat), 5)])
+
+    for r in pc.itertuples():
+        a, city, unit = split(r.addr)
+        add(r.pid, a, city, unit)
+    has_addr = {r[3] for r in rows}
+    for r in pts.drop_duplicates(["pid", "address"]).itertuples():
+        a, city, unit = split(r.address)
+        if unit or r.pid not in has_addr:   # condo units, and parcels without a cadastral situs address
+            add(r.pid, a, city, unit)
+    # compact: parcels table + rows referencing it; cities as a lookup list
+    parcels, pidx, cities, cidx, out_rows = [], {}, [], {}, []
+    for a, city, unit, pid, lon, lat in rows:
+        if pid not in pidx:
+            pidx[pid] = len(parcels); parcels.append([pid, lon, lat])
+        if city not in cidx:
+            cidx[city] = len(cities); cities.append(city)
+        out_rows.append([a, cidx[city], unit, pidx[pid]] if unit else [a, cidx[city], pidx[pid]])
+    out = {"format": "rows: [addr, cityIdx, parcelIdx] or [addr, cityIdx, unit, parcelIdx]",
+           "cities": cities, "parcels": parcels, "rows": out_rows}
+    (PUB / f"addr_{C.slug}.json").write_text(json.dumps(out, separators=(",", ":")))
+    return len(out_rows)
+
+
 def main():
     counties = [COUNTIES[s] for s in ORDER if (COUNTIES[s].derived / "property_points.parquet").exists()]
     levs = {C.slug: json.loads((C.derived / "levies.json").read_text()) for C in counties}
@@ -162,6 +234,7 @@ def main():
         lev = levs[C.slug]
         df = build_index(C.derived, code_idx)
         write_index(df, C.slug)
+        print(C.slug, "address entries", address_index(C))
         for c, m in lev["districts"].items():
             slim["districts"][c] = {"base": m["base"], "name": m["name"], "city_rural": m["city_rural"], "county": C.slug}
         for c in lev["codes"]:
@@ -190,7 +263,7 @@ def main():
         all_parcels.append(pc[["tax", "tax_l", "tax_b", "eff"]])
         counties_meta[C.slug] = {
             "name": f"{C.name} County", "dor_code": C.dor_code, "district_id": f"{C.slug}-county",
-            "index": f"parcels_index_{C.slug}.json", "bbox": [round(float(x), 4) for x in b],
+            "index": f"parcels_index_{C.slug}.json", "addresses": f"addr_{C.slug}.json", "bbox": [round(float(x), 4) for x in b],
             "juris": {"county": COUNTY_JURIS[C.slug], "cities": CITY_JURIS[C.slug]},
             "bill_url": BILL_URL[C.slug], "mills_source": VINTAGE[C.slug]["mills"],
             "totals": {y: {"properties": summ[y]["properties"], "taxable": summ[y]["taxable_total"],

@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { loadCondos } from '../data/load'
 import { CAT_LABEL, type CondoUnit, type Condos, type Meta, type Levies, type ParcelProps, type Year } from '../data/types'
 import { fmtInt, fmtMills, fmtPct, fmtUSD, fmtUSD2 } from '../format'
@@ -47,7 +47,7 @@ export default function PropertyPanel({ pick, year, levies, meta, onYear, onClos
       </div>
     )
   }
-  return <ParcelDetail p={p} building={pick.building} year={year} levies={levies} billUrl={billUrlFor(meta, p.pid)} onYear={onYear} onClose={onClose} />
+  return <ParcelDetail p={p} building={pick.building} unit={pick.unit} year={year} levies={levies} billUrl={billUrlFor(meta, p.pid)} onYear={onYear} onClose={onClose} />
 }
 
 function PanelHead({ title, onClose, children }: { title: string; onClose: () => void; children?: React.ReactNode }) {
@@ -70,8 +70,8 @@ function billUrlFor(meta: Meta, pid: string): ((ac: string, year: Year) => strin
   return (ac, year) => county.bill_url.replace('{ac}', encodeURIComponent(ac)).replace('{year}', year)
 }
 
-function ParcelDetail({ p, building, year, levies, billUrl, onYear, onClose }: {
-  p: ParcelProps; building: Record<string, unknown> | null; year: Year; levies: Levies
+function ParcelDetail({ p, building, unit, year, levies, billUrl, onYear, onClose }: {
+  p: ParcelProps; building: Record<string, unknown> | null; unit?: string; year: Year; levies: Levies
   billUrl: ((ac: string, year: Year) => string) | null; onYear: (y: Year) => void; onClose: () => void
 }) {
   const bd = useMemo(() => computeBreakdown(p, year, levies), [p, year, levies])
@@ -207,7 +207,7 @@ function ParcelDetail({ p, building, year, levies, billUrl, onYear, onClose }: {
       )}
       {!bd.lines && bd.tax > 0 && <p className="note">No component mill breakdown is available for this levy district in TY{year}; the total above is exact.</p>}
 
-      {nUnits > 0 && <CondoUnits pid={p.pid} n={nUnits} year={year} billUrl={billUrl} />}
+      {nUnits > 0 && <CondoUnits pid={p.pid} n={nUnits} year={year} billUrl={billUrl} highlight={unit} />}
 
       <section className="pp-links">
         {ac && billUrl && (
@@ -245,13 +245,19 @@ function BuildingNote({ b, year }: { b: Record<string, unknown>; year: Year }) {
   )
 }
 
-function CondoUnits({ pid, n, year, billUrl }: { pid: string; n: number; year: Year; billUrl: ((ac: string, year: Year) => string) | null }) {
+function CondoUnits({ pid, n, year, billUrl, highlight }: { pid: string; n: number; year: Year; billUrl: ((ac: string, year: Year) => string) | null; highlight?: string }) {
   const [condos, setCondos] = useState<Condos | null>(null)
   const [err, setErr] = useState(false)
   useEffect(() => {
     loadCondos().then(setCondos, () => setErr(true))
   }, [])
   const units = condos?.[pid]
+  const matchKey = highlight?.toUpperCase()
+  const isMatch = (u: CondoUnit) => !!matchKey && (u[0].toUpperCase() === matchKey || u[0].toUpperCase().startsWith(`${matchKey},`))
+  const hlRef = useRef<HTMLTableRowElement>(null)
+  useEffect(() => {
+    hlRef.current?.scrollIntoView({ block: 'center' })
+  }, [units, matchKey])
   const tvOf = (u: CondoUnit) => (year === '2026' ? u[2] : u[4])
   const taxOf = (u: CondoUnit) => (year === '2026' ? u[3] : u[5])
   return (
@@ -266,7 +272,7 @@ function CondoUnits({ pid, n, year, billUrl }: { pid: string; n: number; year: Y
             <thead><tr><th>Unit</th><th className="r">Taxable</th><th className="r">Tax</th></tr></thead>
             <tbody>
               {units.map((u, i) => (
-                <tr key={i}>
+                <tr key={i} ref={isMatch(u) ? hlRef : undefined} className={isMatch(u) ? 'unit-hl' : undefined} aria-current={isMatch(u) || undefined}>
                   <td>
                     {u[1] && billUrl ? (
                       <a href={billUrl(u[1], year)} target="_blank" rel="noreferrer">{u[0] || u[1]}</a>

@@ -36,6 +36,8 @@ export interface PickEvent {
   pid: string
   parcel: ParcelProps | null
   building: Record<string, unknown> | null
+  /** Condo unit to highlight in the master parcel's unit list, e.g. "151 COVEY #D" */
+  unit?: string
 }
 
 export interface ViewState { zoom: number; lat: number; lon: number; pitch: number; bearing: number }
@@ -359,6 +361,32 @@ export class MapController {
     let parcelProps = parcel && parcel.properties.pid === pid ? (parcel.properties as ParcelProps) : null
     parcelProps ??= this.findParcel(pid)
     this.opts.onPick({ pid, parcel: parcelProps, building: building ? { ...building.properties } : null })
+  }
+
+  /** Fly to a point at parcel zoom (keeping the current pitch) and resolve once the tiles there have rendered. */
+  flyToPoint(lon: number, lat: number, zoom = 17.5): Promise<void> {
+    return new Promise((resolve) => {
+      const go = () => {
+        // On phones the property sheet covers the lower half, so land the parcel in the upper part of the map.
+        const h = this.map.getContainer().clientHeight
+        const offset: [number, number] = window.innerWidth < 768 ? [0, -Math.round(h * 0.27)] : [0, 0]
+        this.map.flyTo({ center: [lon, lat], zoom, offset, duration: 1400, essential: true })
+        this.map.once('moveend', () => {
+          // 'idle' fires once the new tiles are loaded and drawn; cap the wait for slow connections.
+          const t = setTimeout(resolve, 4000)
+          this.map.once('idle', () => { clearTimeout(t); resolve() })
+        })
+      }
+      if (this.ready) go()
+      else this.map.once('load', go)
+    })
+  }
+
+  /** The parcel under a point on screen, if any. */
+  parcelAt(lon: number, lat: number): ParcelProps | null {
+    if (!this.ready) return null
+    const f = this.map.queryRenderedFeatures(this.map.project([lon, lat]), { layers: ['parcels-fill'] })
+    return f.length ? (f[0].properties as ParcelProps) : null
   }
 
   findParcel(pid: string): ParcelProps | null {

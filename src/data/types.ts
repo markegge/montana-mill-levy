@@ -13,6 +13,8 @@ export interface CountyMeta {
   /** Tax statement URL template with {ac} and {year} */
   bill_url: string
   mills_source?: string
+  /** Situs address file for search */
+  addresses?: string
 }
 
 export interface Meta {
@@ -72,6 +74,13 @@ export interface PropIndex {
   tax: Record<Year, Float64Array>
   cat: Record<Year, Int8Array>
   hh: Float32Array
+}
+
+/** Situs address list for search: rows are [addr, cityIdx, parcelIdx] or [addr, cityIdx, unit, parcelIdx]. */
+export interface AddressFile {
+  cities: string[]
+  parcels: [pid: string, lon: number, lat: number][]
+  rows: ([string, number, number] | [string, number, string, number])[]
 }
 
 export type CondoUnit = [addr: string, ac: string, tv26: number, tax26: number, tv25: number, tax25: number]

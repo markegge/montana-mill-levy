@@ -1,11 +1,12 @@
 {
- "generated": "2026-11-07",
+ "generated": "2026-11-08",
  "counties": {
   "gallatin": {
    "name": "Gallatin County",
    "dor_code": "06",
    "district_id": "gallatin-county",
    "index": "parcels_index_gallatin.json",
+   "addresses": "addr_gallatin.json",
    "bbox": [
     -111.8054,
     44.4752,
@@ -56,6 +57,7 @@
    "dor_code": "03",
    "district_id": "yellowstone-county",
    "index": "parcels_index_yellowstone.json",
+   "addresses": "addr_yellowstone.json",
    "bbox": [
     -108.9256,
     45.4604,

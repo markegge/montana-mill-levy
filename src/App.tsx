@@ -8,6 +8,8 @@ import type { Condos, PropIndex, Year } from './data/types'
 import { COUNTY_VIEWS, MapController, type PickEvent, type ViewState } from './map/controller'
 import { COLOR_MODES, type ColorMode } from './map/style'
 import PropertyPanel, { YearToggle } from './panel/PropertyPanel'
+import { locateParcel } from './search/addressIndex'
+import SearchBox, { type SearchPick } from './search/SearchBox'
 import About from './ui/About'
 import Legend from './ui/Legend'
 import { readUrl, writeUrl } from './urlState'
@@ -165,6 +167,36 @@ export default function App() {
     ctrl.current?.resize()
   }, [pick, collapsed])
 
+  // The open parcel is part of the shareable URL.
+  useEffect(() => {
+    if (!core) return
+    writeUrl({ parcel: pick?.pid, unit: pick?.unit })
+  }, [pick, core])
+
+  const onSearchPick = useCallback(async (p: SearchPick) => {
+    const c = ctrl.current
+    if (!c) return
+    setPick(null)
+    await c.flyToPoint(p.lon, p.lat)
+    if (p.kind === 'parcel') {
+      setPick({ pid: p.pid, parcel: c.findParcel(p.pid) ?? c.parcelAt(p.lon, p.lat), building: null, unit: p.unit })
+    } else {
+      const parcel = c.parcelAt(p.lon, p.lat)
+      if (parcel?.pid) setPick({ pid: parcel.pid, parcel, building: null })
+    }
+  }, [])
+
+  // A shared ?parcel= link flies there and opens the panel once the map is up.
+  const openedFromUrl = useRef(false)
+  useEffect(() => {
+    if (!core || !mapReady || openedFromUrl.current || !initialUrl.parcel) return
+    openedFromUrl.current = true
+    const pid = initialUrl.parcel
+    locateParcel(pid, core.meta).then((hit) => {
+      if (hit) onSearchPick({ kind: 'parcel', pid, lon: hit.lon, lat: hit.lat, unit: initialUrl.unit })
+    })
+  }, [core, mapReady, onSearchPick])
+
   const onSelectDistrict = useCallback(
     (id: string, label?: string) => {
       const g = groups.get(id)
@@ -243,6 +275,7 @@ export default function App() {
             </p>
           </div>
         </div>
+        {core && <SearchBox meta={core.meta} onPick={onSearchPick} />}
         <div className="top-controls">
           {core && (
             <div className="seg county-switch" role="group" aria-label="Fly to county">

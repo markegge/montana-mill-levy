@@ -132,6 +132,7 @@ revenue at N mills = value of a mill × N`}</pre>
             <li><a href="https://svc.mt.gov/dor/oriondataportal/Public/PropertyMTGov/CertifiedValues.aspx" target="_blank" rel="noreferrer">DOR certified values</a> (validation)</li>
             <li><a href="https://overturemaps.org/" target="_blank" rel="noreferrer">Overture Maps Foundation</a> buildings; basemap © OpenFreeMap, OpenMapTiles, OpenStreetMap contributors</li>
             <li>Boundaries: Montana State Library Administrative Boundaries Framework</li>
+            <li>Search fallback: <a href="https://photon.komoot.io/" target="_blank" rel="noreferrer">Photon by Komoot</a>, © OpenStreetMap contributors. Used only when an address isn't in the county records.</li>
           </ul>
           <p className="small muted">Owner names and mailing addresses are not shown.</p>
         </div>

@@ -3,7 +3,7 @@ import type { Condos, Districts, DistrictStats, Levies, Meta, PropIndex, Validat
 const DATA: string = (import.meta.env.VITE_DATA_BASE as string | undefined) ?? `${import.meta.env.BASE_URL}data`
 export const TILES_BASE: string = (import.meta.env.VITE_TILES_BASE as string | undefined) ?? '/tiles'
 
-async function getJSON<T>(name: string): Promise<T> {
+export async function getJSON<T>(name: string): Promise<T> {
   const res = await fetch(`${DATA}/${name}`)
   if (!res.ok) throw new Error(`${name}: HTTP ${res.status}`)
   return res.json() as Promise<T>
