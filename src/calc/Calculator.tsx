@@ -5,12 +5,14 @@ import { fmtInt, fmtPct, fmtUSD, fmtUSD2, fmtUSDShort } from '../format'
 import { YearToggle } from '../panel/PropertyPanel'
 import { TYPE_LABEL, type DistrictGroup, type Preset } from './districts'
 import type { AreaFeature, Selection } from './select'
-import { EXAMPLE_HOME_MARKET, EXAMPLE_HOME_TAXABLE, residentialDistribution, type BaseStats } from './stats'
+import { addedTax, EXAMPLE_HOME_MARKET, EXAMPLE_HOME_TAXABLE, residentialDistribution, type BaseStats } from './stats'
 import { parseUpload, type UploadedShape } from './upload'
 
 const Histogram = lazy(() => import('./Histogram'))
 
 const MILL_PRESETS = [1, 2, 5, 10, 15, 20]
+
+const fmtLevy = (m: number) => m.toFixed(m % 1 ? 2 : 0)
 
 const SPLIT_COLORS = {
   homestead: '#d25e3d',
@@ -44,11 +46,14 @@ interface Props {
   presets: Preset[]
   selection: Selection | null
   onSelectDistrict: (id: string, label?: string) => void
+  /** Back to the whole county (removes the district mask) */
+  onClearArea: () => void
   onCustom: (features: AreaFeature[], label: string, append: boolean) => void
   rows: Int32Array | null
   base: BaseStats | null
-  mills: number
-  onMills: (m: number) => void
+  /** null = no levy entered yet */
+  mills: number | null
+  onMills: (m: number | null) => void
   drawing: 'polygon' | 'rectangle' | null
   onDraw: (kind: 'polygon' | 'rectangle' | null) => void
   showingAdded: boolean
@@ -59,7 +64,7 @@ interface Props {
 
 export default function Calculator(props: Props) {
   const { idx, progress, levies, year, base, mills, selection, collapsed } = props
-  const revenue = base ? base.millValue * mills : NaN
+  const revenue = base && mills != null ? addedTax(base.taxable, mills) : NaN
 
   return (
     <div className={`calc ${collapsed ? 'is-collapsed' : ''}`}>
@@ -68,8 +73,8 @@ export default function Calculator(props: Props) {
           <div className="kicker">Mill levy calculator</div>
           <div className="calc-head-line">
             <b>{selection?.label ?? 'Choose an area'}</b>
-            <span className="mono">{mills.toFixed(mills % 1 ? 2 : 0)} mills</span>
-            {base && <span className="mono accent">{fmtUSDShort(revenue)}/yr</span>}
+            <span className="mono">{mills == null ? 'no levy set' : `${fmtLevy(mills)} mills`}</span>
+            {base && mills != null && <span className="mono accent">{fmtUSDShort(revenue)}/yr</span>}
           </div>
         </div>
         <span className="chev" aria-hidden>{collapsed ? '▴' : '▾'}</span>
@@ -92,7 +97,7 @@ export default function Calculator(props: Props) {
   )
 }
 
-function DistrictPicker({ groups, presets, selection, onSelectDistrict, onCustom, drawing, onDraw, meta }: Props) {
+function DistrictPicker({ groups, presets, selection, onSelectDistrict, onClearArea, onCustom, drawing, onDraw, meta }: Props) {
   const [q, setQ] = useState('')
   const [open, setOpen] = useState(false)
   const [upload, setUpload] = useState<{ file: string; shapes: UploadedShape[]; on: boolean[] } | null>(null)
@@ -133,7 +138,14 @@ function DistrictPicker({ groups, presets, selection, onSelectDistrict, onCustom
 
   return (
     <section className="picker">
-      <div className="label">Area</div>
+      <div className="picker-label">
+        <div className="label">Area</div>
+        {selection && !selection.all && (
+          <button className="linkish small" onClick={onClearArea} title="Select the whole county again and show every parcel">
+            Clear · show all parcels
+          </button>
+        )}
+      </div>
       {Object.entries(meta.counties).map(([slug, c]) => {
         const ps = presets.filter((p) => p.county === slug)
         if (!ps.length) return null
@@ -225,14 +237,14 @@ function DistrictPicker({ groups, presets, selection, onSelectDistrict, onCustom
   )
 }
 
-function MillInput({ mills, onMills, millValue }: { mills: number; onMills: (m: number) => void; millValue: number }) {
+function MillInput({ mills, onMills, millValue }: { mills: number | null; onMills: (m: number | null) => void; millValue: number }) {
   const [mode, setMode] = useState<'mills' | 'dollars'>('mills')
   const [dollars, setDollars] = useState('')
   const clamp = (v: number) => Math.max(0, Math.min(500, Math.round(v * 1000) / 1000))
   return (
     <section className="mills">
       <div className="mills-head">
-        <div className="label">Levy</div>
+        <div className="label">Levy {mills != null && <button className="linkish small" onClick={() => onMills(null)}>clear</button>}</div>
         <div className="seg small" role="group" aria-label="Input mode">
           <button className={mode === 'mills' ? 'on' : ''} onClick={() => setMode('mills')}>Mills</button>
           <button className={mode === 'dollars' ? 'on' : ''} onClick={() => setMode('dollars')}>Dollar target</button>
@@ -242,13 +254,17 @@ function MillInput({ mills, onMills, millValue }: { mills: number; onMills: (m: 
         <>
           <div className="mills-row">
             <input
-              type="range" min={0} max={50} step={0.1} value={Math.min(50, mills)}
+              type="range" min={0} max={50} step={0.1} value={Math.min(50, mills ?? 0)}
               onChange={(e) => onMills(clamp(Number(e.target.value)))}
               aria-label="Mills"
-              style={{ ['--pct' as string]: `${(Math.min(50, mills) / 50) * 100}%` }}
+              style={{ ['--pct' as string]: `${(Math.min(50, mills ?? 0) / 50) * 100}%` }}
             />
             <label className="num-field">
-              <input type="number" min={0} step={0.1} value={Number(mills.toFixed(3))} onChange={(e) => onMills(clamp(Number(e.target.value) || 0))} aria-label="Mills (number)" />
+              <input
+                type="number" min={0} step={0.1} placeholder="—" value={mills == null ? '' : Number(mills.toFixed(3))}
+                onChange={(e) => onMills(e.target.value === '' ? null : clamp(Number(e.target.value) || 0))}
+                aria-label="Mills (number)"
+              />
               <span>mills</span>
             </label>
           </div>
@@ -267,15 +283,18 @@ function MillInput({ mills, onMills, millValue }: { mills: number; onMills: (m: 
               onChange={(e) => {
                 setDollars(e.target.value)
                 const d = Number(e.target.value)
-                if (millValue > 0 && d >= 0) onMills(clamp(d / millValue))
+                if (e.target.value === '') onMills(null)
+                else if (millValue > 0 && d >= 0) onMills(clamp(d / millValue))
               }}
               aria-label="Annual dollar target"
             />
             <span>/ yr</span>
           </label>
-          <p className="small muted">
-            = <b className="mono">{mills.toFixed(3)} mills</b> at {fmtUSD(millValue)} per mill.
-          </p>
+          {mills != null && (
+            <p className="small muted">
+              = <b className="mono">{mills.toFixed(3)} mills</b> at {fmtUSD(millValue)} per mill.
+            </p>
+          )}
         </div>
       )}
     </section>
@@ -283,10 +302,13 @@ function MillInput({ mills, onMills, millValue }: { mills: number; onMills: (m: 
 }
 
 function Outputs(p: Props & { base: BaseStats; idx: PropIndex }) {
-  const { base, mills, year, rows, idx, levies, selection } = p
+  const { base, year, rows, idx, levies, selection } = p
+  // With no levy entered, the area's base (value of a mill, counts, split) still shows; dollar outputs wait for mills.
+  const has = p.mills != null
+  const mills = p.mills ?? 0
   const scale = mills / 1000
   const dist = useMemo(() => residentialDistribution(base.resTaxable), [base])
-  const revenue = base.millValue * mills
+  const revenue = addedTax(base.taxable, mills)
   const [copied, setCopied] = useState(false)
 
   const splitEntries = (Object.keys(SPLIT_COLORS) as (keyof typeof SPLIT_COLORS)[])
@@ -319,7 +341,7 @@ function Outputs(p: Props & { base: BaseStats; idx: PropIndex }) {
     for (let k = 0; k < rows.length; k++) {
       const i = rows[k]
       const L = idx.levy[i]
-      lines.push([idx.pid[i] ?? '', L >= 0 ? levies.codes[L] : '', `"${CAT_LABEL[cat[i]] ?? ''}"`, tv[i], tax[i].toFixed(2), (tv[i] * scale).toFixed(2)].join(','))
+      lines.push([idx.pid[i] ?? '', L >= 0 ? levies.codes[L] : '', `"${CAT_LABEL[cat[i]] ?? ''}"`, tv[i], tax[i].toFixed(2), addedTax(tv[i], mills).toFixed(2)].join(','))
     }
     const blob = new Blob([lines.join('\n')], { type: 'text/csv' })
     const a = document.createElement('a')
@@ -341,10 +363,17 @@ function Outputs(p: Props & { base: BaseStats; idx: PropIndex }) {
       </div>
 
       <section className="headline">
-        <div>
-          <div className="label">Revenue at {mills} mills</div>
-          <div className="hero-num">{fmtUSD(revenue)}<small>/yr</small></div>
-        </div>
+        {has ? (
+          <div>
+            <div className="label">Revenue at {mills} mills</div>
+            <div className="hero-num">{fmtUSD(revenue)}<small>/yr</small></div>
+          </div>
+        ) : (
+          <div>
+            <div className="label">Revenue</div>
+            <p className="small muted">Enter a levy above to see revenue and what it costs each property.</p>
+          </div>
+        )}
         <div>
           <div className="label">Value of a mill</div>
           <div className="mid-num mono">{fmtUSD(base.millValue)}</div>
@@ -352,7 +381,7 @@ function Outputs(p: Props & { base: BaseStats; idx: PropIndex }) {
         </div>
       </section>
 
-      <BaseAdjustments base={base} mills={mills} meta={p.meta} year={year} selection={selection} />
+      <BaseAdjustments base={base} mills={p.mills} meta={p.meta} year={year} selection={selection} />
 
       <section className="counts">
         <div><b>{fmtInt(base.nProps)}</b><span>properties</span></div>
@@ -364,7 +393,7 @@ function Outputs(p: Props & { base: BaseStats; idx: PropIndex }) {
         <p className="small muted">Includes {fmtInt(base.nUnmapped)} properties with no mapped parcel (counted only in the county-wide total).</p>
       )}
 
-      <section className="examples">
+      {has && <section className="examples">
         <div className="ex">
           <div className="ex-amt mono">{fmtUSD2(EXAMPLE_HOME_TAXABLE * scale)}<small>/yr</small></div>
           <div className="ex-txt">A ${fmtInt(EXAMPLE_HOME_MARKET)} homestead (taxable {fmtUSD(EXAMPLE_HOME_TAXABLE)}, the statewide median home)</div>
@@ -375,9 +404,9 @@ function Outputs(p: Props & { base: BaseStats; idx: PropIndex }) {
             <div className="ex-txt">Median residential property in this area (taxable value {fmtUSD(dist.median)})</div>
           </div>
         )}
-      </section>
+      </section>}
 
-      {dist.n > 0 && (
+      {has && dist.n > 0 && (
         <section>
           <h3>Added cost per residential property</h3>
           <table className="stats-table">
@@ -415,28 +444,30 @@ function Outputs(p: Props & { base: BaseStats; idx: PropIndex }) {
               <tr key={e.k}>
                 <td><i style={{ background: SPLIT_COLORS[e.k] }} />{SPLIT_LABEL[e.k]}</td>
                 <td className="r mono">{fmtPct(e.v / base.taxable)}</td>
-                <td className="r mono">{fmtUSDShort(e.v * scale)}</td>
+                {has && <td className="r mono">{fmtUSDShort(e.v * scale)}</td>}
               </tr>
             ))}
           </tbody>
         </table>
         <div className="kv-row">
-          <span>Residential share of revenue <b className="mono">{fmtPct(resShare)}</b></span>
+          <span>Residential share of {has ? 'revenue' : 'the base'} <b className="mono">{fmtPct(resShare)}</b></span>
           <span>Commercial <b className="mono">{fmtPct(commShare)}</b></span>
         </div>
         <div className="kv-row">
-          <span>Incorporated cities <b className="mono">{fmtPct(cityShare)}</b> · {fmtUSDShort(base.cityTaxable * scale)}</span>
-          <span>Unincorporated <b className="mono">{fmtPct(1 - cityShare)}</b> · {fmtUSDShort(base.ruralTaxable * scale)}</span>
+          <span>Incorporated cities <b className="mono">{fmtPct(cityShare)}</b>{has && <> · {fmtUSDShort(base.cityTaxable * scale)}</>}</span>
+          <span>Unincorporated <b className="mono">{fmtPct(1 - cityShare)}</b>{has && <> · {fmtUSDShort(base.ruralTaxable * scale)}</>}</span>
         </div>
       </section>
 
-      <section className="actions">
-        <button className={`btn ${p.showingAdded ? 'on' : 'primary'}`} onClick={() => p.onShowAdded(!p.showingAdded)}>
-          {p.showingAdded ? 'Showing added tax on map' : 'Map the added tax'}
-        </button>
-        <button className="btn" onClick={downloadCsv}>Download CSV</button>
-        <button className="btn" onClick={copy}>{copied ? 'Copied' : 'Copy summary'}</button>
-      </section>
+      {has && (
+        <section className="actions">
+          <button className={`btn ${p.showingAdded ? 'on' : 'primary'}`} onClick={() => p.onShowAdded(!p.showingAdded)}>
+            {p.showingAdded ? 'Showing added tax on map' : 'Map the added tax'}
+          </button>
+          <button className="btn" onClick={downloadCsv}>Download CSV</button>
+          <button className="btn" onClick={copy}>{copied ? 'Copied' : 'Copy summary'}</button>
+        </section>
+      )}
 
       <StatuteNote />
     </div>
@@ -458,7 +489,7 @@ const JURIS_NAME: Record<string, string> = {
   LAUREL: 'City of Laurel',
 }
 
-function BaseAdjustments({ base, mills, meta, year, selection }: { base: BaseStats; mills: number; meta: Meta; year: Year; selection: Selection | null }) {
+function BaseAdjustments({ base, mills, meta, year, selection }: { base: BaseStats; mills: number | null; meta: Meta; year: Year; selection: Selection | null }) {
   // City selections use the city's certified ratio; anything else uses its county's. A shape spanning two counties gets no estimate.
   const single = selection?.counties.length === 1 ? meta.counties[selection.counties[0]] : undefined
   const nrKey = (selection && NON_REAL_KEY[selection.key]) || single?.juris.county
@@ -470,25 +501,25 @@ function BaseAdjustments({ base, mills, meta, year, selection }: { base: BaseSta
       <div className="label">Levy base adjustments</div>
       <table className="adjust-table">
         <thead>
-          <tr><th /><th className="r">per mill</th><th className="r">at {mills} mills</th></tr>
+          <tr><th /><th className="r">per mill</th>{mills != null && <th className="r">at {mills} mills</th>}</tr>
         </thead>
         <tbody>
           <tr>
             <td>Mapped real property</td>
             <td className="r mono">{fmtUSD(base.millValue)}</td>
-            <td className="r mono">{fmtUSDShort(base.millValue * mills)}</td>
+            {mills != null && <td className="r mono">{fmtUSDShort(base.millValue * mills)}</td>}
           </tr>
           {base.tifIncrement > 0 && (
             <>
               <tr className="minus">
                 <td>Less est. TIF increment <span className="muted">({fmtUSDShort(base.tifIncrement)} taxable)</span></td>
                 <td className="r mono">−{fmtUSD(base.tifIncrement / 1000)}</td>
-                <td className="r mono">−{fmtUSDShort((base.tifIncrement / 1000) * mills)}</td>
+                {mills != null && <td className="r mono">−{fmtUSDShort((base.tifIncrement / 1000) * mills)}</td>}
               </tr>
               <tr className="net">
                 <td>Net to the levying district</td>
                 <td className="r mono">{fmtUSD(netTaxable / 1000)}</td>
-                <td className="r mono">{fmtUSDShort((netTaxable / 1000) * mills)}</td>
+                {mills != null && <td className="r mono">{fmtUSDShort((netTaxable / 1000) * mills)}</td>}
               </tr>
             </>
           )}

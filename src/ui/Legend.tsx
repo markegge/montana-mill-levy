@@ -6,13 +6,13 @@ interface Props {
   mode: ColorMode
   meta: Meta
   addedBreaks: number[]
-  mills: number
+  mills: number | null
   year: string
   selectionLabel?: string
 }
 
 export default function Legend({ mode, meta, addedBreaks, mills, year, selectionLabel }: Props) {
-  const { breaks, colors } = legendFor(mode, meta, addedBreaks, mills)
+  const { breaks, colors } = legendFor(mode, meta, addedBreaks, mills ?? 0)
   const fmt = (v: number) => (mode === 'eff' ? `$${v.toFixed(v < 10 ? 2 : 1)}` : fmtUSDShort(v))
   const title = COLOR_MODES.find((m) => m.id === mode)?.label
   return (

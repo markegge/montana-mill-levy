@@ -24,8 +24,10 @@ export default function App() {
   const [viewCounty, setViewCounty] = useState<string | null>(null)
   const [condos, setCondos] = useState<Condos | null>(null)
   const [year, setYear] = useState<Year>(initialUrl.year ?? '2026')
-  const [mills, setMills] = useState(initialUrl.mills ?? 5)
-  const [mode, setMode] = useState<ColorMode>(initialUrl.color ?? 'tax')
+  // No levy until the user enters one: the parcel panel's impact section and the added-tax map wait for it.
+  const [mills, setMills] = useState<number | null>(initialUrl.mills ?? null)
+  // A shared link asking for the added-tax map without a levy falls back to total tax.
+  const [mode, setMode] = useState<ColorMode>(initialUrl.color === 'added' && initialUrl.mills == null ? 'tax' : (initialUrl.color ?? 'tax'))
   const [selection, setSelection] = useState<Selection | null>(null)
   const [pick, setPick] = useState<PickEvent | null>(null)
   const [drawing, setDrawing] = useState<'polygon' | 'rectangle' | null>(null)
@@ -140,9 +142,17 @@ export default function App() {
     ctrl.current?.setStyle(mode, year, addedBreaks, mills)
   }, [mode, year, addedBreaks, mills, mapReady])
 
+  // A district (anything narrower than a whole county) masks the parcels outside it once its membership is known.
+  const masked = !!selection && !selection.all && rows != null && selPids.length > 0
   useEffect(() => {
-    if (mapReady) ctrl.current?.setSelectedParcels(selPids)
-  }, [selPids, mapReady])
+    if (mapReady) ctrl.current?.setSelectedParcels(selPids, masked)
+  }, [selPids, masked, mapReady])
+
+  // The added-tax map needs a levy; drop back to total tax when it's cleared.
+  const onMills = useCallback((m: number | null) => {
+    setMills(m)
+    if (m == null) setMode((cur) => (cur === 'added' ? 'tax' : cur))
+  }, [])
 
   useEffect(() => {
     if (!ctrl.current || !selection) return
@@ -207,6 +217,14 @@ export default function App() {
     },
     [groups, presets, core],
   )
+
+  /** Back to the whole county the selection is in: removes the mask without moving the map. */
+  const onClearArea = useCallback(() => {
+    if (!core || !selection) return
+    const g = groups.get(core.meta.counties[selection.counties[0]]?.district_id ?? '')
+    if (!g) return
+    setSelection(selectionForDistrict(g, core.meta, presets.find((p) => p.id === g.id)?.label))
+  }, [core, selection, groups, presets])
 
   const onCustom = useCallback((features: AreaFeature[], label: string, append: boolean) => {
     if (!core) return
@@ -295,7 +313,7 @@ export default function App() {
             <span>Color by</span>
             <select value={mode} onChange={(e) => setMode(e.target.value as ColorMode)}>
               {COLOR_MODES.map((m) => (
-                <option key={m.id} value={m.id} disabled={m.id === 'added' && !base}>{m.short}</option>
+                <option key={m.id} value={m.id} disabled={m.id === 'added' && (!base || mills == null)}>{m.short}</option>
               ))}
             </select>
           </label>
@@ -324,11 +342,12 @@ export default function App() {
               presets={presets}
               selection={selection}
               onSelectDistrict={onSelectDistrict}
+              onClearArea={onClearArea}
               onCustom={onCustom}
               rows={rows}
               base={base}
               mills={mills}
-              onMills={setMills}
+              onMills={onMills}
               drawing={drawing}
               onDraw={onDraw}
               showingAdded={mode === 'added'}
@@ -340,7 +359,10 @@ export default function App() {
         )}
         {core && pick && (
           <aside className="prop-panel" aria-label="Property details">
-            <PropertyPanel pick={pick} year={year} levies={core.levies} meta={core.meta} onYear={setYear} onClose={() => setPick(null)} />
+            <PropertyPanel
+              pick={pick} year={year} levies={core.levies} meta={core.meta} onYear={setYear} onClose={() => setPick(null)}
+              proposed={selection ? { mills, label: selection.label, parcelTaxable: base?.year === year ? base.parcelTaxable : null } : null}
+            />
           </aside>
         )}
         {core && (

@@ -4,6 +4,9 @@ import { CAT, isResidential, type Condos, type Levies, type PropIndex, type Year
 export const EXAMPLE_HOME_MARKET = 378_000
 export const EXAMPLE_HOME_TAXABLE = EXAMPLE_HOME_MARKET * 0.0076
 
+/** Added annual tax from a levy: taxable value × mills ÷ 1000 (the calculator's one formula). */
+export const addedTax = (taxable: number, mills: number) => (taxable * mills) / 1000
+
 export interface BaseStats {
   year: Year
   /** Properties / parcels with taxable value in this tax year (matches district_stats). */

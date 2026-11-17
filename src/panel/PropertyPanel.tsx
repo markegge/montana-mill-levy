@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { loadCondos } from '../data/load'
 import { CAT_LABEL, type CondoUnit, type Condos, type Meta, type Levies, type ParcelProps, type Year } from '../data/types'
 import { fmtInt, fmtMills, fmtPct, fmtUSD, fmtUSD2 } from '../format'
+import { addedTax } from '../calc/stats'
 import type { PickEvent } from '../map/controller'
 import { yf } from '../map/style'
 import { computeBreakdown, formatGeocode, LAND_COLOR, num, STRUCT_COLOR } from './breakdown'
@@ -28,7 +29,18 @@ function badgeFor(p: ParcelProps, year: Year, tax: number): { label: string; cls
   }
 }
 
+/** The calculator's proposed levy, for the parcel's impact section. */
+export interface ProposedLevy {
+  /** null until the user enters a levy */
+  mills: number | null
+  /** Selected area, e.g. "City of Bozeman" */
+  label: string
+  /** pid → Σ taxable value of the selection's properties on that parcel (calculator membership); null while loading */
+  parcelTaxable: Map<string, number> | null
+}
+
 interface Props {
+  proposed: ProposedLevy | null
   pick: PickEvent
   year: Year
   levies: Levies
@@ -37,7 +49,7 @@ interface Props {
   onClose: () => void
 }
 
-export default function PropertyPanel({ pick, year, levies, meta, onYear, onClose }: Props) {
+export default function PropertyPanel({ pick, year, levies, meta, proposed, onYear, onClose }: Props) {
   const p = pick.parcel
   if (!p) {
     return (
@@ -47,7 +59,7 @@ export default function PropertyPanel({ pick, year, levies, meta, onYear, onClos
       </div>
     )
   }
-  return <ParcelDetail p={p} building={pick.building} unit={pick.unit} year={year} levies={levies} billUrl={billUrlFor(meta, p.pid)} onYear={onYear} onClose={onClose} />
+  return <ParcelDetail p={p} building={pick.building} unit={pick.unit} year={year} levies={levies} proposed={proposed} billUrl={billUrlFor(meta, p.pid)} onYear={onYear} onClose={onClose} />
 }
 
 function PanelHead({ title, onClose, children }: { title: string; onClose: () => void; children?: React.ReactNode }) {
@@ -70,8 +82,8 @@ function billUrlFor(meta: Meta, pid: string): ((ac: string, year: Year) => strin
   return (ac, year) => county.bill_url.replace('{ac}', encodeURIComponent(ac)).replace('{year}', year)
 }
 
-function ParcelDetail({ p, building, unit, year, levies, billUrl, onYear, onClose }: {
-  p: ParcelProps; building: Record<string, unknown> | null; unit?: string; year: Year; levies: Levies
+function ParcelDetail({ p, building, unit, year, levies, proposed, billUrl, onYear, onClose }: {
+  p: ParcelProps; building: Record<string, unknown> | null; unit?: string; year: Year; levies: Levies; proposed: ProposedLevy | null
   billUrl: ((ac: string, year: Year) => string) | null; onYear: (y: Year) => void; onClose: () => void
 }) {
   const bd = useMemo(() => computeBreakdown(p, year, levies), [p, year, levies])
@@ -123,6 +135,8 @@ function ParcelDetail({ p, building, unit, year, levies, billUrl, onYear, onClos
           <div><span className="label">Per $1k market</span> <b className="mono">{f('eff') ? `$${f('eff').toFixed(2)}` : '—'}</b></div>
         </div>
       </section>
+
+      {proposed && <LevyImpact p={p} year={year} tax={bd.tax} proposed={proposed} levies={levies} nUnits={nUnits} />}
 
       {building && <BuildingNote b={building} year={year} />}
 
@@ -207,7 +221,12 @@ function ParcelDetail({ p, building, unit, year, levies, billUrl, onYear, onClos
       )}
       {!bd.lines && bd.tax > 0 && <p className="note">No component mill breakdown is available for this levy district in TY{year}; the total above is exact.</p>}
 
-      {nUnits > 0 && <CondoUnits pid={p.pid} n={nUnits} year={year} billUrl={billUrl} highlight={unit} />}
+      {nUnits > 0 && (
+        <CondoUnits
+          pid={p.pid} n={nUnits} year={year} billUrl={billUrl} highlight={unit}
+          addedMills={proposed?.mills != null && proposed.parcelTaxable?.has(p.pid) ? proposed.mills : null}
+        />
+      )}
 
       <section className="pp-links">
         {ac && billUrl && (
@@ -221,6 +240,63 @@ function ParcelDetail({ p, building, unit, year, levies, billUrl, onYear, onClos
 
       <footer className="caveat">{CAVEAT}</footer>
     </div>
+  )
+}
+
+/** "5", "2.5", "0.125": mills as the user typed them. */
+const fmtLevy = (m: number) => String(Number(m.toFixed(3)))
+
+/** What the calculator's proposed levy would add to this parcel's bill (same formula as the calculator: taxable × mills ÷ 1000). */
+function LevyImpact({ p, year, tax, proposed, levies, nUnits }: {
+  p: ParcelProps; year: Year; tax: number; proposed: ProposedLevy; levies: Levies; nUnits: number
+}) {
+  const { mills, label, parcelTaxable } = proposed
+  if (mills == null) {
+    return <p className="impact-hint">Enter a proposed mill levy in the calculator to see what it would add to this parcel's tax.</p>
+  }
+  const head = <div className="label">Proposed levy impact · {fmtLevy(mills)} mills in {label}</div>
+  if (!parcelTaxable) {
+    return <section className="impact">{head}<p className="small muted">Loading the area's property records…</p></section>
+  }
+  if (!parcelTaxable.has(p.pid)) {
+    return (
+      <section className="impact out">
+        {head}
+        <div className="impact-num">$0.00<small>/yr</small></div>
+        <p>Not affected: this parcel is outside {label}, so the levy wouldn't apply to it.</p>
+      </section>
+    )
+  }
+  const tv = parcelTaxable.get(p.pid) ?? 0
+  if (!(tv > 0)) {
+    return (
+      <section className="impact out">
+        {head}
+        <div className="impact-num">$0.00<small>/yr</small></div>
+        <p>This parcel is in {label} but has no TY{year} taxable value (exempt or non-valued), so the levy adds nothing.</p>
+      </section>
+    )
+  }
+  const added = addedTax(tv, mills)
+  const pct = tax > 0 ? added / tax : null
+  const tif = (levies.districts[(p.levy as string) || '']?.tif_ratio?.[year] ?? 0) > 0
+  return (
+    <section className="impact">
+      {head}
+      <div className="impact-num">+{fmtUSD2(added)}<small>/yr</small></div>
+      <p className="impact-line">
+        +{fmtLevy(mills)} mills → <b>+{fmtUSD2(added)}/year</b> (+{fmtUSD2(added / 12)}/month)
+      </p>
+      {pct != null && (
+        <p className="impact-line">
+          TY{year} tax {fmtUSD2(tax)} → <b>{fmtUSD2(tax + added)}</b> (+{fmtPct(pct, pct < 0.01 ? 2 : 1)})
+        </p>
+      )}
+      <p className="small muted">
+        Taxable value {fmtUSD(tv)} × {fmtLevy(mills)} mills ÷ 1,000{nUnits > 0 ? `, summed over the parcel's ${fmtInt(nUnits)} condo units (each unit's share is in the unit list below)` : ''}.
+        {tif && ' This parcel is in a TIF district: the bill is the same, but the part levied on the TIF increment goes to the urban renewal district rather than the levying district.'}
+      </p>
+    </section>
   )
 }
 
@@ -245,7 +321,9 @@ function BuildingNote({ b, year }: { b: Record<string, unknown>; year: Year }) {
   )
 }
 
-function CondoUnits({ pid, n, year, billUrl, highlight }: { pid: string; n: number; year: Year; billUrl: ((ac: string, year: Year) => string) | null; highlight?: string }) {
+function CondoUnits({ pid, n, year, billUrl, highlight, addedMills }: {
+  pid: string; n: number; year: Year; billUrl: ((ac: string, year: Year) => string) | null; highlight?: string; addedMills: number | null
+}) {
   const [condos, setCondos] = useState<Condos | null>(null)
   const [err, setErr] = useState(false)
   useEffect(() => {
@@ -269,7 +347,7 @@ function CondoUnits({ pid, n, year, billUrl, highlight }: { pid: string; n: numb
       {units && (
         <div className="table-scroll tall">
           <table className="lines">
-            <thead><tr><th>Unit</th><th className="r">Taxable</th><th className="r">Tax</th></tr></thead>
+            <thead><tr><th>Unit</th><th className="r">Taxable</th><th className="r">Tax</th>{addedMills != null && <th className="r">Levy</th>}</tr></thead>
             <tbody>
               {units.map((u, i) => (
                 <tr key={i} ref={isMatch(u) ? hlRef : undefined} className={isMatch(u) ? 'unit-hl' : undefined} aria-current={isMatch(u) || undefined}>
@@ -280,6 +358,7 @@ function CondoUnits({ pid, n, year, billUrl, highlight }: { pid: string; n: numb
                   </td>
                   <td className="r mono">{fmtUSD(tvOf(u))}</td>
                   <td className="r mono">{fmtUSD2(taxOf(u))}</td>
+                  {addedMills != null && <td className="r mono impact-cell">+{fmtUSD2(addedTax(tvOf(u), addedMills))}</td>}
                 </tr>
               ))}
             </tbody>
@@ -288,6 +367,7 @@ function CondoUnits({ pid, n, year, billUrl, highlight }: { pid: string; n: numb
                 <td>Σ {units.length} units</td>
                 <td className="r mono">{fmtUSD(units.reduce((s, u) => s + tvOf(u), 0))}</td>
                 <td className="r mono">{fmtUSD2(units.reduce((s, u) => s + taxOf(u), 0))}</td>
+                {addedMills != null && <td className="r mono impact-cell">+{fmtUSD2(units.reduce((s, u) => s + addedTax(tvOf(u), addedMills), 0))}</td>}
               </tr>
             </tfoot>
           </table>

@@ -7,7 +7,8 @@ import { TILES_BASE } from '../data/load'
 import type { Meta, ParcelProps, Year } from '../data/types'
 import { fmtMills, fmtUSD } from '../format'
 import {
-  addedLabel, buildingColor, moneyLabel, parcelFillColor, parcelFillOpacity, yf, type ColorMode,
+  addedLabel, buildingColor, buildingHeight, buildingLabelOpacity, moneyLabel, parcelFillColor, parcelFillOpacity,
+  parcelLabelOpacity, parcelLineOpacity, yf, type ColorMode,
 } from './style'
 
 export const BASEMAP = 'https://tiles.openfreemap.org/styles/positron'
@@ -57,10 +58,16 @@ export class MapController {
   private mode: ColorMode = 'tax'
   private year: Year = '2026'
   private addedBreaks: number[] = [1, 2, 3, 4, 5, 6]
-  private mills = 5
+  private mills: number | null = null
   private hoverPid: string | null = null
   private pickedPid: string | null = null
   private selPids: string[] = []
+  /** A district is selected: parcels outside it are faded and their buildings flattened. */
+  private mask = false
+  private selSet = new Set<string>()
+  /** Building ids whose `out` feature-state is current for this mask. */
+  private bldgDone = new Set<string | number>()
+  private bldgSyncQueued = false
   private popup: maplibregl.Popup
   private drawing = false
   private draw: { stop(): void } | null = null
@@ -197,6 +204,10 @@ export class MapController {
     map.on('mousemove', (e) => this.onHover(e))
     map.on('mouseout', () => this.clearHover())
     map.on('click', (e) => this.onClick(e))
+    map.on('sourcedata', (e) => {
+      if (e.sourceId === 'buildings' && this.mask) this.queueBuildingSync()
+    })
+    map.on('idle', () => this.syncBuildingMask())
     this.ready = true
     this.applyStyle()
     this.applySelectionState()
@@ -209,17 +220,20 @@ export class MapController {
 
   private applyStyle() {
     if (!this.ready) return
-    const { map, mode, year, meta } = this
-    map.setPaintProperty('parcels-fill', 'fill-color', parcelFillColor(mode, year, meta, this.addedBreaks))
-    map.setPaintProperty('parcels-fill', 'fill-opacity', parcelFillOpacity(mode))
-    map.setPaintProperty('buildings-3d', 'fill-extrusion-color', buildingColor(mode, year, meta))
+    const { map, mode, year, meta, mask } = this
+    map.setPaintProperty('parcels-fill', 'fill-color', parcelFillColor(mode, year, meta, this.addedBreaks, mask))
+    map.setPaintProperty('parcels-fill', 'fill-opacity', parcelFillOpacity(mode, mask))
+    map.setPaintProperty('parcels-line', 'line-opacity', parcelLineOpacity(mask))
+    map.setPaintProperty('buildings-3d', 'fill-extrusion-color', buildingColor(mode, year, meta, mask))
+    map.setPaintProperty('buildings-3d', 'fill-extrusion-height', buildingHeight(mask))
     map.setPaintProperty('buildings-3d', 'fill-extrusion-opacity', mode === 'added' ? 0.55 : 0.9)
+    map.setPaintProperty('building-labels', 'text-opacity', buildingLabelOpacity(mask))
     if (mode === 'added') {
-      map.setLayoutProperty('parcel-labels', 'text-field', addedLabel(year, this.mills))
+      map.setLayoutProperty('parcel-labels', 'text-field', addedLabel(year, this.mills ?? 0))
       map.setFilter('parcel-labels', ['>', ['coalesce', ['get', yf('tv', year)], 0], 0])
-      map.setPaintProperty('parcel-labels', 'text-opacity', ['case', ['boolean', ['feature-state', 'sel'], false], 1, 0])
+      map.setPaintProperty('parcel-labels', 'text-opacity', parcelLabelOpacity(true))
     } else {
-      map.setPaintProperty('parcel-labels', 'text-opacity', 1)
+      map.setPaintProperty('parcel-labels', 'text-opacity', parcelLabelOpacity(mask))
       map.setLayoutProperty('parcel-labels', 'text-field', moneyLabel(yf('tax', year)))
       map.setFilter('parcel-labels', ['>', ['coalesce', ['get', yf('tax', year)], 0], 0])
     }
@@ -228,7 +242,7 @@ export class MapController {
     map.setFilter('building-labels', ['>', ['coalesce', ['get', yf('tax_b', year)], 0], 0])
   }
 
-  setStyle(mode: ColorMode, year: Year, addedBreaks: number[], mills: number) {
+  setStyle(mode: ColorMode, year: Year, addedBreaks: number[], mills: number | null) {
     this.mills = mills
     this.mode = mode
     this.year = year
@@ -267,10 +281,47 @@ export class MapController {
     else this.map.once('load', apply)
   }
 
-  /** Parcels in the calculator selection, for the added-tax choropleth. */
-  setSelectedParcels(pids: string[]) {
+  /**
+   * Parcels in the calculator selection, for the added-tax choropleth. With `mask`, everything else is faded
+   * (parcels) or flattened (buildings) so the selected district is the only live area on the map.
+   */
+  setSelectedParcels(pids: string[], mask = false) {
     this.selPids = pids
+    this.selSet = new Set(pids)
+    const maskChanged = mask !== this.mask
+    this.mask = mask
     this.applySelectionState()
+    this.resetBuildingMask()
+    if (maskChanged) this.applyStyle()
+  }
+
+  /** Clear building `out` states; they are re-derived from the loaded tiles for the current selection. */
+  private resetBuildingMask() {
+    this.bldgDone.clear()
+    if (!this.ready) return
+    this.map.removeFeatureState({ source: 'buildings', sourceLayer: 'buildings' })
+    this.syncBuildingMask()
+  }
+
+  private queueBuildingSync() {
+    if (this.bldgSyncQueued) return
+    this.bldgSyncQueued = true
+    requestAnimationFrame(() => {
+      this.bldgSyncQueued = false
+      this.syncBuildingMask()
+    })
+  }
+
+  /** Mark loaded building footprints whose parcel is outside the selection (feature-state is keyed by building id). */
+  private syncBuildingMask() {
+    if (!this.ready || !this.mask) return
+    const feats = this.map.querySourceFeatures('buildings', { sourceLayer: 'buildings' })
+    for (const f of feats) {
+      const id = f.id
+      if (id == null || this.bldgDone.has(id)) continue
+      this.bldgDone.add(id)
+      if (!this.selSet.has(f.properties.pid as string)) this.map.setFeatureState({ source: 'buildings', sourceLayer: 'buildings', id }, { out: true })
+    }
   }
 
   private applySelectionState() {
@@ -339,6 +390,7 @@ export class MapController {
       const tax = Number(p[yf('tax', y)] ?? 0)
       const addr = (p.addr as string) || 'No situs address'
       html += `<div class="tip-addr">${escapeHtml(addr)}</div>`
+      if (this.mask && !this.selSet.has(p.pid as string)) html += '<div class="tip-sub">Outside the selected area</div>'
       html += tax > 0
         ? `<div class="tip-row"><span>${building ? 'Parcel total' : `TY${y} tax`}</span><b>${fmtUSD(tax)}</b></div><div class="tip-row"><span>Mills</span><b>${fmtMills(Number(p[yf('mills', y)]))}</b></div>`
         : '<div class="tip-sub">Exempt / non-valued</div>'

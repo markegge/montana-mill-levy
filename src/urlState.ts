@@ -13,7 +13,7 @@ export interface UrlState {
   unit?: string
 }
 
-/** `#zoom/lat/lon/pitch/bearing` + `?district=city-bozeman&mills=5&year=2026&color=tax&parcel=<pid>&unit=D`. */
+/** `#zoom/lat/lon/pitch/bearing` + `?district=city-bozeman&mills=5` (omitted when no levy is set) `&year=2026&color=tax&parcel=<pid>&unit=D`. */
 export function readUrl(): UrlState {
   const out: UrlState = {}
   const h = window.location.hash.replace(/^#/, '').split('/').map(Number)
@@ -23,8 +23,9 @@ export function readUrl(): UrlState {
   const q = new URLSearchParams(window.location.search)
   const d = q.get('district')
   if (d) out.district = d
-  const m = Number(q.get('mills'))
-  if (q.has('mills') && Number.isFinite(m) && m >= 0) out.mills = m
+  const ms = q.get('mills')
+  const m = Number(ms)
+  if (ms && Number.isFinite(m) && m >= 0) out.mills = m
   const y = q.get('year')
   if (y === '2025' || y === '2026') out.year = y
   const c = q.get('color') as ColorMode | null
@@ -37,19 +38,19 @@ export function readUrl(): UrlState {
 }
 
 let pending: number | null = null
-type Written = { view?: ViewState; district?: string; mills: number; year: Year; color: ColorMode; parcel?: string; unit?: string }
+type Written = { view?: ViewState; district?: string; mills: number | null; year: Year; color: ColorMode; parcel?: string; unit?: string }
 let latest: Written | null = null
 
 /** Merge into the URL; pass `district: undefined` explicitly for a custom (unshareable) area. */
 export function writeUrl(s: Partial<Written>) {
-  latest = { mills: 5, year: '2026', color: 'tax', ...latest, ...s }
+  latest = { mills: null, year: '2026', color: 'tax', ...latest, ...s }
   if (pending != null) return
   pending = window.setTimeout(() => {
     pending = null
     if (!latest) return
     const q = new URLSearchParams()
     if (latest.district) q.set('district', latest.district)
-    q.set('mills', String(latest.mills))
+    if (latest.mills != null) q.set('mills', String(latest.mills))
     q.set('year', latest.year)
     if (latest.color !== 'tax') q.set('color', latest.color)
     if (latest.parcel) q.set('parcel', latest.parcel)
